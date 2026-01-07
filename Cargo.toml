@@ -1,0 +1,10 @@
+[package]
+name = "fvchem-fvm1d"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+faer = "0.23"
+
+[profile.dev.package.faer]
+opt-level = 3
