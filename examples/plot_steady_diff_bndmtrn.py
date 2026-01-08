@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 L = 1.00  # length of domain
 D = 0.10  # diffusion coefficient
 R = 2.00  # reaction rate
-kL = 0.20  # mass transfer coefficient
+k = 0.20  # mass transfer coefficient
 cextL = 1.00  # left external concentration
 cR = 1.00  # right boundary concentration
 
@@ -17,8 +17,8 @@ idx = np.argsort(x_num)
 x_num, c_num = x_num[idx], c_num[idx]
 
 # analytical solution
-a_mat = np.array([[1, kL], [-L/D, 1]])
-b_vec = np.array([kL*cextL, cR + (R*L**2)/(2*D)])
+a_mat = np.array([[1, k], [-L/D, 1]])
+b_vec = np.array([k*cextL, cR + (R*L**2)/(2*D)])
 c1, c2 = np.linalg.solve(a_mat, b_vec)
 x_ana = np.linspace(0, L, 100)
 c_ana = (-R/2/D)*x_ana**2 - (c1/D)*x_ana + c2

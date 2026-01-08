@@ -276,7 +276,7 @@ impl SteadyDiff {
         // concentration jump - store in face A
         self.assemble_flux_cf(prob, a_triplet, dom1d_a, c_id_a, fid_a, cid_a, fid_a, loc_a);
         self.add_a(prob, a_triplet, c_id_a, c_id_a, fid_a, fid_a, -k_f);
-        self.add_a(prob, a_triplet, c_id_a, c_id_b, fid_a, fid_b, -k_f);
+        self.add_a(prob, a_triplet, c_id_a, c_id_b, fid_a, fid_b,  k_f);
         
         // flux continuity - store in face B
         self.assemble_flux_cf(prob, a_triplet, dom1d_a, c_id_b, fid_b, cid_a, fid_a, loc_a);
