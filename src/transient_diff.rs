@@ -113,6 +113,9 @@ impl TransientDiff {
     }
 
     fn assemble_internal(&self, prob: &Problem1D, a_triplet: &mut Vec<Triplet<usize, usize, f64>>, b_vec: &mut Col<f64>, dom1d_id: usize, dt: f64) {
+        // get variable ids
+        let c_id = self.internal_c[&dom1d_id];
+
         // loop over cells
         for &cid in prob.dom1d[dom1d_id].cell_id.iter() {
 
@@ -121,11 +124,11 @@ impl TransientDiff {
                 let fid = prob.dom1d[dom1d_id].cell_face_id[&cid][loc];
                 let nid = prob.dom1d[dom1d_id].cell_cell_id[&cid][loc];
                 if nid >= 0 {  // internal face
-                    self.assemble_flux_cn(prob, a_triplet, dom1d_id, cid, cid, fid, nid, loc);  // discretized equation - store in cell equation
-                    self.assemble_flux_cf(prob, a_triplet, dom1d_id, fid, cid, fid, loc);  // face interpolation - store in face equation
-                    self.assemble_flux_cf(prob, a_triplet, dom1d_id, fid, nid, fid, loc);  // face interpolation - store in face equation
+                    self.assemble_flux_cn(prob, a_triplet, dom1d_id, c_id, cid, cid, fid, nid, loc);  // discretized equation - store in cell equation
+                    self.assemble_flux_cf(prob, a_triplet, dom1d_id, c_id, fid, cid, fid, loc);  // face interpolation - store in face equation
+                    self.assemble_flux_cf(prob, a_triplet, dom1d_id, c_id, fid, nid, fid, loc);  // face interpolation - store in face equation
                 } else {
-                    self.assemble_flux_cf(prob, a_triplet, dom1d_id, cid, cid, fid, loc);  // boundary discretized equation - store in cell equation
+                    self.assemble_flux_cf(prob, a_triplet, dom1d_id, c_id, cid, cid, fid, loc);  // boundary discretized equation - store in cell equation
                     // face equation handled in boundary and interface conditions
                 }
             }
@@ -136,7 +139,7 @@ impl TransientDiff {
         }
     }
 
-    fn assemble_flux_cn(&self, prob: &Problem1D, a_triplet: &mut Vec<Triplet<usize, usize, f64>>, dom1d_id: usize, row: i32, cid: i32, fid: i32, nid: i32, loc: usize) {
+    fn assemble_flux_cn(&self, prob: &Problem1D, a_triplet: &mut Vec<Triplet<usize, usize, f64>>, dom1d_id: usize, var_row: usize, row: i32, cid: i32, fid: i32, nid: i32, loc: usize) {
         // get variable ids
         let c_id = self.internal_c[&dom1d_id];
         let d_id = self.internal_d[&dom1d_id];
@@ -146,11 +149,11 @@ impl TransientDiff {
         let dist_cn = prob.dom1d[dom1d_id].cell_cell_dist[&cid][loc];
 
         // add to matrix
-        self.add_a(prob, a_triplet, c_id, c_id, row, cid, d_f/dist_cn);
-        self.add_a(prob, a_triplet, c_id, c_id, row, nid, -d_f/dist_cn);
+        self.add_a(prob, a_triplet, var_row, c_id, row, cid, d_f/dist_cn);
+        self.add_a(prob, a_triplet, var_row, c_id, row, nid, -d_f/dist_cn);
     }
 
-    fn assemble_flux_cf(&self, prob: &Problem1D, a_triplet: &mut Vec<Triplet<usize, usize, f64>>, dom1d_id: usize, row: i32, cid: i32, fid: i32, loc: usize) {
+    fn assemble_flux_cf(&self, prob: &Problem1D, a_triplet: &mut Vec<Triplet<usize, usize, f64>>, dom1d_id: usize, var_row: usize, row: i32, cid: i32, fid: i32, loc: usize) {
         // get variable ids
         let c_id = self.internal_c[&dom1d_id];
         let d_id = self.internal_d[&dom1d_id];
@@ -160,8 +163,8 @@ impl TransientDiff {
         let dist_cf = prob.dom1d[dom1d_id].cell_face_dist[&cid][loc];
 
         // add to matrix
-        self.add_a(prob, a_triplet, c_id, c_id, row, cid, d_f/dist_cf);
-        self.add_a(prob, a_triplet, c_id, c_id, row, fid, -d_f/dist_cf);
+        self.add_a(prob, a_triplet, var_row, c_id, row, cid, d_f/dist_cf);
+        self.add_a(prob, a_triplet, var_row, c_id, row, fid, -d_f/dist_cf);
     }
 
     fn assemble_src(&self, prob: &Problem1D, a_triplet: &mut Vec<Triplet<usize, usize, f64>>, b_vec: &mut Col<f64>, dom1d_id: usize, dt: f64, row: i32, cid: i32) {
@@ -216,7 +219,7 @@ impl TransientDiff {
         let n_f = prob.scl0d[n0d_id].face_value;
 
         // add to rhs
-        self.assemble_flux_cf(prob, a_triplet, dom1d_id, fid, cid, fid, loc);  // flux discretization
+        self.assemble_flux_cf(prob, a_triplet, dom1d_id, c_id, fid, cid, fid, loc);  // flux discretization
         self.add_b(prob, b_vec, c_id, fid, n_f);
     }
 
@@ -235,7 +238,7 @@ impl TransientDiff {
         let c_ref = prob.scl0d[c0d_id].face_value;
 
         // add to matrix and rhs
-        self.assemble_flux_cf(prob, a_triplet, dom1d_id, fid, cid, fid, loc);  // flux discretization
+        self.assemble_flux_cf(prob, a_triplet, dom1d_id, c_id, fid, cid, fid, loc);  // flux discretization
         self.add_a(prob, a_triplet, c_id, c_id, fid, fid, -k_f);
         self.add_b(prob, b_vec, c_id, fid, -k_f * c_ref);
     }
@@ -257,11 +260,11 @@ impl TransientDiff {
 
         // concentration continuity - store in face A
         self.add_a(prob, a_triplet, c_id_a, c_id_a, fid_a, fid_a, 1.0);
-        self.add_a(prob, a_triplet, c_id_b, c_id_b, fid_a, fid_b, -1.0);
+        self.add_a(prob, a_triplet, c_id_a, c_id_b, fid_a, fid_b, -1.0);
 
         // flux continuity - store in face B
-        self.assemble_flux_cf(prob, a_triplet, dom1d_a, fid_b, cid_a, fid_a, loc_a);
-        self.assemble_flux_cf(prob, a_triplet, dom1d_b, fid_b, cid_b, fid_b, loc_b);
+        self.assemble_flux_cf(prob, a_triplet, dom1d_a, c_id_b, fid_b, cid_a, fid_a, loc_a);
+        self.assemble_flux_cf(prob, a_triplet, dom1d_b, c_id_b, fid_b, cid_b, fid_b, loc_b);
     }
 
     fn assemble_itrmtrn(&self, prob: &Problem1D, a_triplet: &mut Vec<Triplet<usize, usize, f64>>, dom0d_a: usize, dom0d_b: usize) {
@@ -282,13 +285,13 @@ impl TransientDiff {
         let k_f = prob.scl0d[k_id].face_value;
 
         // concentration jump - store in face A
-        self.assemble_flux_cf(prob, a_triplet, dom1d_a, fid_a, cid_a, fid_a, loc_a);
+        self.assemble_flux_cf(prob, a_triplet, dom1d_a, c_id_a, fid_a, cid_a, fid_a, loc_a);
         self.add_a(prob, a_triplet, c_id_a, c_id_a, fid_a, fid_a, -k_f);
-        self.add_a(prob, a_triplet, c_id_b, c_id_b, fid_a, fid_b, -k_f);
+        self.add_a(prob, a_triplet, c_id_a, c_id_b, fid_a, fid_b, -k_f);
         
         // flux continuity - store in face B
-        self.assemble_flux_cf(prob, a_triplet, dom1d_a, fid_b, cid_a, fid_a, loc_a);
-        self.assemble_flux_cf(prob, a_triplet, dom1d_b, fid_b, cid_b, fid_b, loc_b);
+        self.assemble_flux_cf(prob, a_triplet, dom1d_a, c_id_b, fid_b, cid_a, fid_a, loc_a);
+        self.assemble_flux_cf(prob, a_triplet, dom1d_b, c_id_b, fid_b, cid_b, fid_b, loc_b);
     }
 
 }
