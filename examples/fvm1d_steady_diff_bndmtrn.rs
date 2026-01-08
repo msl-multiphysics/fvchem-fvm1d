@@ -27,6 +27,6 @@ fn main()
     solver.add_domain(dom, c, d, r);
     solver.add_boundary_masstransfer(dom_l, k_l, cext_l);
     solver.add_boundary_concentration(dom_r, c_r);
-    solver.solve(&mut prob, 1000, 1e-6);
+    solver.solve(&mut prob, 1000, 1e-6, 1.0);
     
 }

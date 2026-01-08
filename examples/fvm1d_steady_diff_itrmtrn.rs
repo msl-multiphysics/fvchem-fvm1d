@@ -45,6 +45,6 @@ fn main()
     solver.add_boundary_concentration(dom_al, c_l);
     solver.add_boundary_flux(dom_br, n_r);
     solver.add_interface_masstransfer(dom_ar, dom_bl, k_ab);
-    solver.solve(&mut prob, 1000, 1e-6);
+    solver.solve(&mut prob, 1000, 1e-6, 1.0);
     
 }

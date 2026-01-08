@@ -26,7 +26,7 @@ pub trait SteadyBase {
     }
 
     // steady-state solver
-    fn solve(&self, prob: &mut Problem1D, max_iter: usize, tol_l2: f64) {
+    fn solve(&self, prob: &mut Problem1D, max_iter: usize, tol_l2: f64, damping: f64) {
 
         let time_start = Instant::now();
         println!("Starting steady-state solver.");
@@ -69,7 +69,8 @@ pub trait SteadyBase {
                 &a_triplet,
             ).expect("Failed to create sparse matrix from triplets.");
             let lu = a_mat.sp_lu().expect("Failed to perform LU decomposition.");
-            let x_vec = lu.solve(&b_vec);
+            let x_undamp_vec = lu.solve(&b_vec);  // undamped solution vector
+            let x_vec = (1.0 - damping) * &x_iter_vec + damping * x_undamp_vec;  // damped solution vector
 
             let time_i3 = Instant::now();
 
