@@ -296,7 +296,7 @@ impl TransientDiffAdv {
     fn assemble_bndnadv(&self, prob: &Problem1D, a_triplet: &mut Vec<Triplet<usize, usize, f64>>, b_vec: &mut Col<f64>, dom0d_id: usize) {
         // get variable ids
         let dom1d_id = prob.dom0d[dom0d_id].dom1d_id;
-        let n0d_id = self.bndflux_n[&dom0d_id];
+        let n0d_id = self.bndnadv_n[&dom0d_id];
         let c_id = self.internal_c[&dom1d_id];
 
         // get properties
