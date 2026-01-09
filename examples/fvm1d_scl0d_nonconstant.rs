@@ -3,13 +3,11 @@ use std::fs::create_dir_all;
 
 fn mtrn_func(_t: f64, _x: f64, vars: Vec<f64>) -> f64 {
     let c = vars[0];
-    let n = 0.2*(c - 1.0);  // mass transfer function
+    let n = 0.2 * (c - 1.0); // mass transfer function
     n
 }
 
-fn main()
-{
-
+fn main() {
     // create problem
     let mut prob = Problem1D::new();
 
@@ -21,10 +19,17 @@ fn main()
 
     // add properties
     create_dir_all("examples/output_scl0d_nonconstant").unwrap();
-    let c = Problem1D::add_var1d(&mut prob, dom, 0.0, "examples/output_scl0d_nonconstant/c".to_string(), 0);
+    let c = Problem1D::add_var1d(
+        &mut prob,
+        dom,
+        0.0,
+        "examples/output_scl0d_nonconstant/c".to_string(),
+        0,
+    );
     let d = Problem1D::add_scl1d(&mut prob, dom, 0.1, "".to_string(), 0);
     let r = Problem1D::add_scl1d(&mut prob, dom, 2.0, "".to_string(), 0);
-    let n_l = Problem1D::add_scl0d_nonconstant(&mut prob, dom_l, mtrn_func, vec![c], "".to_string(), 0);
+    let n_l =
+        Problem1D::add_scl0d_nonconstant(&mut prob, dom_l, mtrn_func, vec![c], "".to_string(), 0);
     let c_r = Problem1D::add_scl0d(&mut prob, dom_r, 1.0, "".to_string(), 0);
 
     // create steady diffusion solver
@@ -33,5 +38,4 @@ fn main()
     solver.add_boundary_flux(dom_l, n_l);
     solver.add_boundary_concentration(dom_r, c_r);
     solver.solve(&mut prob, 1000, 1e-6, 0.5);
-    
 }

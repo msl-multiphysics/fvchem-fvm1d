@@ -1,9 +1,7 @@
 use fvchem_fvm1d::*;
 use std::fs::create_dir_all;
 
-fn main()
-{
-
+fn main() {
     // create problem
     let mut prob = Problem1D::new();
 
@@ -28,10 +26,22 @@ fn main()
 
     // add properties
     create_dir_all("examples/output_steady_diff_itrcont").unwrap();
-    let c_a = Problem1D::add_var1d(&mut prob, dom_a, 1.0, "examples/output_steady_diff_itrcont/ca".to_string(), 0);
+    let c_a = Problem1D::add_var1d(
+        &mut prob,
+        dom_a,
+        1.0,
+        "examples/output_steady_diff_itrcont/ca".to_string(),
+        0,
+    );
     let d_a = Problem1D::add_scl1d(&mut prob, dom_a, 0.2, "".to_string(), 0);
     let r_a = Problem1D::add_scl1d(&mut prob, dom_a, 2.0, "".to_string(), 0);
-    let c_b = Problem1D::add_var1d(&mut prob, dom_b, 1.0, "examples/output_steady_diff_itrcont/cb".to_string(), 0);
+    let c_b = Problem1D::add_var1d(
+        &mut prob,
+        dom_b,
+        1.0,
+        "examples/output_steady_diff_itrcont/cb".to_string(),
+        0,
+    );
     let d_b = Problem1D::add_scl1d(&mut prob, dom_b, 0.1, "".to_string(), 0);
     let r_b = Problem1D::add_scl1d(&mut prob, dom_b, 1.0, "".to_string(), 0);
     let c_l = Problem1D::add_scl0d(&mut prob, dom_al, 1.0, "".to_string(), 0);
@@ -45,5 +55,4 @@ fn main()
     solver.add_boundary_flux(dom_br, n_r);
     solver.add_interface_continuity(dom_ar, dom_bl);
     solver.solve(&mut prob, 1000, 1e-6, 1.0);
-    
 }

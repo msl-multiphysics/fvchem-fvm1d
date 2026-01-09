@@ -2,18 +2,32 @@ use crate::problem_1d::Problem1D;
 use crate::scalar_0d::Scalar0D;
 use crate::scalar_1d::Scalar1D;
 use crate::variable_1d::Variable1D;
+use faer::linalg::solvers::Solve;
 use faer::prelude::Col;
 use faer::sparse::{SparseColMat, Triplet};
-use faer::linalg::solvers::Solve;
 use std::time::{Duration, Instant};
 
 pub trait TransientBase {
-
     // matrix assembly - to be implemented in specific models
-    fn assemble_matrix(&self, prob: &Problem1D, a_triplet: &mut Vec<Triplet<usize, usize, f64>>, b_vec: &mut Col<f64>, dt: f64);
+    fn assemble_matrix(
+        &self,
+        prob: &Problem1D,
+        a_triplet: &mut Vec<Triplet<usize, usize, f64>>,
+        b_vec: &mut Col<f64>,
+        dt: f64,
+    );
 
     // add terms to A
-    fn add_a(&self, prob: &Problem1D, a_triplet: &mut Vec<Triplet<usize, usize, f64>>, var_row: usize, var_col: usize, row: i32, col: i32, val: f64) {
+    fn add_a(
+        &self,
+        prob: &Problem1D,
+        a_triplet: &mut Vec<Triplet<usize, usize, f64>>,
+        var_row: usize,
+        var_col: usize,
+        row: i32,
+        col: i32,
+        val: f64,
+    ) {
         let xrow = prob.var1d[var_row].xid[&row];
         let xcol = prob.var1d[var_col].xid[&col];
         a_triplet.push(Triplet::new(xrow, xcol, val));
@@ -26,8 +40,15 @@ pub trait TransientBase {
     }
 
     // transient solver
-    fn solve(&self, prob: &mut Problem1D, dt: f64, num_ts: usize, max_iter: usize, tol_l2: f64, damping: f64) {
-
+    fn solve(
+        &self,
+        prob: &mut Problem1D,
+        dt: f64,
+        num_ts: usize,
+        max_iter: usize,
+        tol_l2: f64,
+        damping: f64,
+    ) {
         let time_start = Instant::now();
         println!("Starting transient solver.");
 
@@ -48,17 +69,15 @@ pub trait TransientBase {
 
         // iterate over time steps
         for ts in 0..num_ts {
-
             let time_0 = Instant::now();
 
             // write scalars and variables
             self.write_scalar_variable(prob, ts);
 
-            let time_1 = Instant::now(); 
+            let time_1 = Instant::now();
 
             // iterate to convergence
             for iter in 0..max_iter {
-
                 let time_i0 = Instant::now();
 
                 // update scalars
@@ -70,18 +89,17 @@ pub trait TransientBase {
                 a_triplet.clear();
                 b_vec.fill(0.0);
                 self.assemble_matrix(prob, &mut a_triplet, &mut b_vec, dt);
-                
+
                 let time_i2 = Instant::now();
 
                 // solve linear system
                 let a_mat = SparseColMat::<usize, f64>::try_new_from_triplets(
-                    mat_size,
-                    mat_size,
-                    &a_triplet,
-                ).expect("Failed to create sparse matrix from triplets.");
+                    mat_size, mat_size, &a_triplet,
+                )
+                .expect("Failed to create sparse matrix from triplets.");
                 let lu = a_mat.sp_lu().expect("Failed to perform LU decomposition.");
-                let x_undamp_vec = lu.solve(&b_vec);  // undamped solution vector
-                let x_vec = (1.0 - damping) * &x_iter_vec + damping * x_undamp_vec;  // damped solution vector
+                let x_undamp_vec = lu.solve(&b_vec); // undamped solution vector
+                let x_vec = (1.0 - damping) * &x_iter_vec + damping * x_undamp_vec; // damped solution vector
 
                 let time_i3 = Instant::now();
 
@@ -104,7 +122,6 @@ pub trait TransientBase {
                 time_assemble += time_i2.duration_since(time_i1);
                 time_solve += time_i3.duration_since(time_i2);
                 time_update += time_i1.duration_since(time_i0) + time_i4.duration_since(time_i3);
-
             }
 
             let time_2 = Instant::now();
@@ -117,7 +134,6 @@ pub trait TransientBase {
             // update time measurements
             time_write += time_1.duration_since(time_0);
             time_update += time_3.duration_since(time_2);
-
         }
 
         let time_end = Instant::now();
@@ -130,11 +146,15 @@ pub trait TransientBase {
         println!("  Solve time: {:.6} s", time_solve.as_secs_f64());
         println!("  Update time: {:.6} s", time_update.as_secs_f64());
         println!("  Write time: {:.6} s", time_write.as_secs_f64());
-
     }
 
-    fn resize_vector(&self, prob: &mut Problem1D, b_vec: &mut Col<f64>, x_iter_vec: &mut Col<f64>, mat_size: &mut usize) {
-        
+    fn resize_vector(
+        &self,
+        prob: &mut Problem1D,
+        b_vec: &mut Col<f64>,
+        x_iter_vec: &mut Col<f64>,
+        mat_size: &mut usize,
+    ) {
         // determine size of matrix
         *mat_size = 0 as usize;
         for var in &prob.var1d {
@@ -175,11 +195,9 @@ pub trait TransientBase {
                 x_iter_vec[xid] = value;
             }
         }
-
     }
 
     fn update_scalar_iter(&self, prob: &mut Problem1D) {
-
         // iterate over scalars and update
         for scl0d in &mut prob.scl0d {
             // &prob.dom0d[scl0d.dom0d_id] -> Domain0D
@@ -189,11 +207,9 @@ pub trait TransientBase {
         for scl1d in &mut prob.scl1d {
             Scalar1D::update_iter(&prob.dom1d[scl1d.dom1d_id], scl1d, &prob.var1d);
         }
-    
     }
 
     fn update_variable_iter(&self, prob: &mut Problem1D, x_vec: &Col<f64>) {
-
         // iterate over variables and update
         for var in &mut prob.var1d {
             let dom_id = var.dom1d_id;
@@ -208,11 +224,9 @@ pub trait TransientBase {
                 var.face_value.insert(*fid, value);
             }
         }
-
     }
 
     fn update_prev(&self, prob: &mut Problem1D) {
-
         // update previous values
         for scl0d in &mut prob.scl0d {
             Scalar0D::update_prev(scl0d);
@@ -223,11 +237,9 @@ pub trait TransientBase {
         for var in &mut prob.var1d {
             Variable1D::update_prev(var);
         }
-
     }
 
     fn write_scalar_variable(&self, prob: &mut Problem1D, ts: usize) {
-
         // write scalars and variables
         for scl0d in &prob.scl0d {
             Scalar0D::write_transient(&prob.dom0d[scl0d.dom0d_id], scl0d, ts);
@@ -238,7 +250,5 @@ pub trait TransientBase {
         for var in &prob.var1d {
             Variable1D::write_transient(&prob.dom1d[var.dom1d_id], var, ts);
         }
-
     }
-
 }

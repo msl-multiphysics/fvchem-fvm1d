@@ -2,18 +2,31 @@ use crate::problem_1d::Problem1D;
 use crate::scalar_0d::Scalar0D;
 use crate::scalar_1d::Scalar1D;
 use crate::variable_1d::Variable1D;
+use faer::linalg::solvers::Solve;
 use faer::prelude::Col;
 use faer::sparse::{SparseColMat, Triplet};
-use faer::linalg::solvers::Solve;
 use std::time::{Duration, Instant};
 
 pub trait SteadyBase {
-
     // matrix assembly - to be implemented in specific models
-    fn assemble_matrix(&self, prob: &Problem1D, a_triplet: &mut Vec<Triplet<usize, usize, f64>>, b_vec: &mut Col<f64>);
+    fn assemble_matrix(
+        &self,
+        prob: &Problem1D,
+        a_triplet: &mut Vec<Triplet<usize, usize, f64>>,
+        b_vec: &mut Col<f64>,
+    );
 
     // add terms to A
-    fn add_a(&self, prob: &Problem1D, a_triplet: &mut Vec<Triplet<usize, usize, f64>>, var_row: usize, var_col: usize, row: i32, col: i32, val: f64) {
+    fn add_a(
+        &self,
+        prob: &Problem1D,
+        a_triplet: &mut Vec<Triplet<usize, usize, f64>>,
+        var_row: usize,
+        var_col: usize,
+        row: i32,
+        col: i32,
+        val: f64,
+    ) {
         let xrow = prob.var1d[var_row].xid[&row];
         let xcol = prob.var1d[var_col].xid[&col];
         a_triplet.push(Triplet::new(xrow, xcol, val));
@@ -27,7 +40,6 @@ pub trait SteadyBase {
 
     // steady-state solver
     fn solve(&self, prob: &mut Problem1D, max_iter: usize, tol_l2: f64, damping: f64) {
-
         let time_start = Instant::now();
         println!("Starting steady-state solver.");
 
@@ -47,7 +59,6 @@ pub trait SteadyBase {
 
         // iterate to convergence
         for iter in 0..max_iter {
-
             let time_i0 = Instant::now();
 
             // update scalars
@@ -59,18 +70,16 @@ pub trait SteadyBase {
             a_triplet.clear();
             b_vec.fill(0.0);
             self.assemble_matrix(prob, &mut a_triplet, &mut b_vec);
-            
+
             let time_i2 = Instant::now();
 
             // solve linear system
-            let a_mat = SparseColMat::<usize, f64>::try_new_from_triplets(
-                mat_size,
-                mat_size,
-                &a_triplet,
-            ).expect("Failed to create sparse matrix from triplets.");
+            let a_mat =
+                SparseColMat::<usize, f64>::try_new_from_triplets(mat_size, mat_size, &a_triplet)
+                    .expect("Failed to create sparse matrix from triplets.");
             let lu = a_mat.sp_lu().expect("Failed to perform LU decomposition.");
-            let x_undamp_vec = lu.solve(&b_vec);  // undamped solution vector
-            let x_vec = (1.0 - damping) * &x_iter_vec + damping * x_undamp_vec;  // damped solution vector
+            let x_undamp_vec = lu.solve(&b_vec); // undamped solution vector
+            let x_vec = (1.0 - damping) * &x_iter_vec + damping * x_undamp_vec; // damped solution vector
 
             let time_i3 = Instant::now();
 
@@ -93,7 +102,6 @@ pub trait SteadyBase {
             time_assemble += time_i2.duration_since(time_i1);
             time_solve += time_i3.duration_since(time_i2);
             time_update += time_i1.duration_since(time_i0) + time_i4.duration_since(time_i3);
-
         }
 
         let time_0 = Instant::now();
@@ -112,11 +120,15 @@ pub trait SteadyBase {
         println!("  Solve time: {:.6} s", time_solve.as_secs_f64());
         println!("  Update time: {:.6} s", time_update.as_secs_f64());
         println!("  Write time: {:.6} s", time_write.as_secs_f64());
-
     }
 
-    fn resize_vector(&self, prob: &mut Problem1D, b_vec: &mut Col<f64>, x_iter_vec: &mut Col<f64>, mat_size: &mut usize) {
-        
+    fn resize_vector(
+        &self,
+        prob: &mut Problem1D,
+        b_vec: &mut Col<f64>,
+        x_iter_vec: &mut Col<f64>,
+        mat_size: &mut usize,
+    ) {
         // determine size of matrix
         *mat_size = 0 as usize;
         for var in &prob.var1d {
@@ -157,11 +169,9 @@ pub trait SteadyBase {
                 x_iter_vec[xid] = value;
             }
         }
-
     }
 
     fn update_scalar_iter(&self, prob: &mut Problem1D) {
-
         // iterate over scalars and update
         for scl0d in &mut prob.scl0d {
             // &prob.dom0d[scl0d.dom0d_id] -> Domain0D
@@ -171,11 +181,9 @@ pub trait SteadyBase {
         for scl1d in &mut prob.scl1d {
             Scalar1D::update_iter(&prob.dom1d[scl1d.dom1d_id], scl1d, &prob.var1d);
         }
-    
     }
 
     fn update_variable_iter(&self, prob: &mut Problem1D, x_vec: &Col<f64>) {
-
         // iterate over variables and update
         for var in &mut prob.var1d {
             let dom_id = var.dom1d_id;
@@ -190,11 +198,9 @@ pub trait SteadyBase {
                 var.face_value.insert(*fid, value);
             }
         }
-
     }
 
     fn write_scalar_variable(&self, prob: &mut Problem1D) {
-
         // write scalars and variables
         for scl0d in &prob.scl0d {
             Scalar0D::write_steady(&prob.dom0d[scl0d.dom0d_id], scl0d);
@@ -205,7 +211,5 @@ pub trait SteadyBase {
         for var in &prob.var1d {
             Variable1D::write_steady(&prob.dom1d[var.dom1d_id], var);
         }
-
     }
-
 }

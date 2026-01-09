@@ -12,11 +12,11 @@ pub struct Scalar1D {
 
     // cell data
     pub cell_value: HashMap<i32, f64>,
-    pub cell_value_prev : HashMap<i32, f64>,
+    pub cell_value_prev: HashMap<i32, f64>,
 
     // face data
     pub face_value: HashMap<i32, f64>,
-    pub face_value_prev : HashMap<i32, f64>,
+    pub face_value_prev: HashMap<i32, f64>,
 
     // output file data
     pub is_output: bool,
@@ -77,7 +77,7 @@ impl Scalar1D {
             value_func,
         }
     }
-    
+
     pub fn new_nonconstant(
         scl1d_id: usize,
         dom1d: &Domain1D,
@@ -93,7 +93,6 @@ impl Scalar1D {
         // cell data
         let mut cell_value: HashMap<i32, f64> = HashMap::new();
         for &cid in dom1d.cell_id.iter() {
-
             // get position and variable values
             let x = dom1d.cell_x[&cid];
             let mut var_val: Vec<f64> = Vec::new();
@@ -111,7 +110,6 @@ impl Scalar1D {
         // face data
         let mut face_value: HashMap<i32, f64> = HashMap::new();
         for &fid in dom1d.face_id.iter() {
-
             // get position and variable values
             let x = dom1d.face_x[&fid];
             let mut var_val: Vec<f64> = Vec::new();
@@ -150,7 +148,6 @@ impl Scalar1D {
     }
 
     pub fn update_iter(dom: &Domain1D, scl: &mut Scalar1D, var_all: &Vec<Variable1D>) {
-        
         // only update if non-constant
         if scl.is_constant {
             return;
@@ -158,7 +155,6 @@ impl Scalar1D {
 
         // iterate over cells
         for &cid in dom.cell_id.iter() {
-
             // get position and variable values
             let x = dom.cell_x[&cid];
             let mut var_val: Vec<f64> = Vec::new();
@@ -170,12 +166,10 @@ impl Scalar1D {
             // update scalar value
             let scl_val = (scl.value_func)(0.0, x, var_val.clone());
             scl.cell_value.insert(cid, scl_val);
-
         }
 
         // iterate over faces
         for &fid in dom.face_id.iter() {
-
             // get position and variable values
             let x = dom.face_x[&fid];
             let mut var_val: Vec<f64> = Vec::new();
@@ -187,22 +181,16 @@ impl Scalar1D {
             // update scalar value
             let scl_val = (scl.value_func)(0.0, x, var_val.clone());
             scl.face_value.insert(fid, scl_val);
-
         }
-
     }
 
     pub fn update_prev(scl: &mut Scalar1D) {
-
         // copy current values to previous
         scl.cell_value_prev = scl.cell_value.clone();
         scl.face_value_prev = scl.face_value.clone();
-
     }
 
-    pub fn write_steady(dom: &Domain1D, scl: &Scalar1D)
-    {
-
+    pub fn write_steady(dom: &Domain1D, scl: &Scalar1D) {
         // output only if specified
         if !scl.is_output {
             return;
@@ -212,40 +200,57 @@ impl Scalar1D {
         let mut file_cell = File::create(scl.output_file.clone() + "_cell.csv").unwrap();
         writeln!(file_cell, "x,u").unwrap();
         for &cid in dom.cell_id.iter() {
-            writeln!(file_cell, "{:.6},{:.6}", dom.cell_x[&cid], scl.cell_value[&cid]).unwrap();
+            writeln!(
+                file_cell,
+                "{:.6},{:.6}",
+                dom.cell_x[&cid], scl.cell_value[&cid]
+            )
+            .unwrap();
         }
 
         // write face data
         let mut file_face = File::create(scl.output_file.clone() + "_face.csv").unwrap();
         writeln!(file_face, "x,u").unwrap();
-        for &fid in dom.face_id.iter() {    
-            writeln!(file_face, "{:.6},{:.6}", dom.face_x[&fid], scl.face_value[&fid]).unwrap();
+        for &fid in dom.face_id.iter() {
+            writeln!(
+                file_face,
+                "{:.6},{:.6}",
+                dom.face_x[&fid], scl.face_value[&fid]
+            )
+            .unwrap();
         }
-
     }
 
-    pub fn write_transient(dom: &Domain1D, scl: &Scalar1D, ts: usize)
-    {
-
+    pub fn write_transient(dom: &Domain1D, scl: &Scalar1D, ts: usize) {
         // output only if specified
         if !scl.is_output || ts % scl.output_step != 0 {
             return;
         }
 
         // write cell data
-        let mut file_cell = File::create(scl.output_file.clone() + "_cell_" + &ts.to_string() + ".csv").unwrap();
+        let mut file_cell =
+            File::create(scl.output_file.clone() + "_cell_" + &ts.to_string() + ".csv").unwrap();
         writeln!(file_cell, "x,u").unwrap();
         for &cid in dom.cell_id.iter() {
-            writeln!(file_cell, "{:.6},{:.6}", dom.cell_x[&cid], scl.cell_value[&cid]).unwrap();
+            writeln!(
+                file_cell,
+                "{:.6},{:.6}",
+                dom.cell_x[&cid], scl.cell_value[&cid]
+            )
+            .unwrap();
         }
 
         // write face data
-        let mut file_face = File::create(scl.output_file.clone() + "_face_" + &ts.to_string() + ".csv").unwrap();
+        let mut file_face =
+            File::create(scl.output_file.clone() + "_face_" + &ts.to_string() + ".csv").unwrap();
         writeln!(file_face, "x,u").unwrap();
-        for &fid in dom.face_id.iter() {    
-            writeln!(file_face, "{:.6},{:.6}", dom.face_x[&fid], scl.face_value[&fid]).unwrap();
+        for &fid in dom.face_id.iter() {
+            writeln!(
+                file_face,
+                "{:.6},{:.6}",
+                dom.face_x[&fid], scl.face_value[&fid]
+            )
+            .unwrap();
         }
-
     }
-
 }

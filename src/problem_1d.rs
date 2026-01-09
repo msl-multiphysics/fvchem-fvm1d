@@ -25,7 +25,6 @@ impl Problem1D {
     }
 
     pub fn add_dom0d(prob: &mut Problem1D, dom1d_id: usize, cell_id: i32, loc: usize) -> usize {
-
         // get dom0d_id
         let dom0d_id = prob.dom0d.len();
 
@@ -36,11 +35,9 @@ impl Problem1D {
 
         // return
         dom0d_id
-
     }
 
     pub fn add_dom1d(prob: &mut Problem1D, mesh: &Mesh1D) -> usize {
-
         // get dom1d_id
         let dom1d_id = prob.dom1d.len();
 
@@ -50,11 +47,9 @@ impl Problem1D {
 
         // return
         dom1d_id
-
     }
 
     pub fn add_dom1d_from_subset(prob: &mut Problem1D, mesh: &Mesh1D, cell_id: Vec<i32>) -> usize {
-
         // get dom1d_id
         let dom1d_id = prob.dom1d.len();
 
@@ -64,11 +59,15 @@ impl Problem1D {
 
         // return
         dom1d_id
-
     }
 
-    pub fn add_scl0d(prob: &mut Problem1D, dom0d_id: usize, value: f64, output_file: String, output_step: usize) -> usize {
-
+    pub fn add_scl0d(
+        prob: &mut Problem1D,
+        dom0d_id: usize,
+        value: f64,
+        output_file: String,
+        output_step: usize,
+    ) -> usize {
         // get scl0d_id
         let scl0d_id = prob.scl0d.len();
 
@@ -79,26 +78,43 @@ impl Problem1D {
 
         // return
         scl0d_id
-
     }
 
-    pub fn add_scl0d_nonconstant(prob: &mut Problem1D, dom0d_id: usize, value_func: fn(f64, f64, Vec<f64>) -> f64, var1d_id: Vec<usize>, output_file: String, output_step: usize) -> usize {
-
+    pub fn add_scl0d_nonconstant(
+        prob: &mut Problem1D,
+        dom0d_id: usize,
+        value_func: fn(f64, f64, Vec<f64>) -> f64,
+        var1d_id: Vec<usize>,
+        output_file: String,
+        output_step: usize,
+    ) -> usize {
         // get scl0d_id
         let scl0d_id = prob.scl0d.len();
 
         // create Scalar0D
         let dom0d = &prob.dom0d[dom0d_id];
-        let scl0d = Scalar0D::new_nonconstant(scl0d_id, dom0d, &prob.var1d, var1d_id, value_func, output_file, output_step);
+        let scl0d = Scalar0D::new_nonconstant(
+            scl0d_id,
+            dom0d,
+            &prob.var1d,
+            var1d_id,
+            value_func,
+            output_file,
+            output_step,
+        );
         prob.scl0d.push(scl0d);
 
         // return
         scl0d_id
-
     }
 
-    pub fn add_scl1d(prob: &mut Problem1D, dom1d_id: usize, value: f64, output_file: String, output_step: usize) -> usize {
-
+    pub fn add_scl1d(
+        prob: &mut Problem1D,
+        dom1d_id: usize,
+        value: f64,
+        output_file: String,
+        output_step: usize,
+    ) -> usize {
         // get scl1d_id
         let scl1d_id = prob.scl1d.len();
 
@@ -109,26 +125,43 @@ impl Problem1D {
 
         // return
         scl1d_id
-
     }
 
-    pub fn add_scl1d_nonconstant(prob: &mut Problem1D, dom1d_id: usize, value_func: fn(f64, f64, Vec<f64>) -> f64, var1d_id: Vec<usize>, output_file: String, output_step: usize) -> usize {
-
+    pub fn add_scl1d_nonconstant(
+        prob: &mut Problem1D,
+        dom1d_id: usize,
+        value_func: fn(f64, f64, Vec<f64>) -> f64,
+        var1d_id: Vec<usize>,
+        output_file: String,
+        output_step: usize,
+    ) -> usize {
         // get scl1d_id
         let scl1d_id = prob.scl1d.len();
 
         // create Scalar1D
         let dom1d = &prob.dom1d[dom1d_id];
-        let scl1d = Scalar1D::new_nonconstant(scl1d_id, dom1d, &prob.var1d, var1d_id, value_func, output_file, output_step);
+        let scl1d = Scalar1D::new_nonconstant(
+            scl1d_id,
+            dom1d,
+            &prob.var1d,
+            var1d_id,
+            value_func,
+            output_file,
+            output_step,
+        );
         prob.scl1d.push(scl1d);
 
         // return
         scl1d_id
-
     }
 
-    pub fn add_var1d(prob: &mut Problem1D, dom1d_id: usize, value_init: f64, output_file: String, output_step: usize) -> usize {
-
+    pub fn add_var1d(
+        prob: &mut Problem1D,
+        dom1d_id: usize,
+        value_init: f64,
+        output_file: String,
+        output_step: usize,
+    ) -> usize {
         // get var1d_id
         let var1d_id = prob.var1d.len();
 
@@ -139,7 +172,5 @@ impl Problem1D {
 
         // return
         var1d_id
-
     }
-
 }

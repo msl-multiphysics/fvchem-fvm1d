@@ -125,9 +125,8 @@ impl Mesh1D {
             face_cell_dist,
         }
     }
-    
-    pub fn new_from_face(face_x_vec : Vec<f64>) -> Mesh1D {
-        
+
+    pub fn new_from_face(face_x_vec: Vec<f64>) -> Mesh1D {
         // sort face positions
         let mut face_x_sort = face_x_vec.clone();
         face_x_sort.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -163,16 +162,32 @@ impl Mesh1D {
         let mut cell_cell_dist: HashMap<i32, Vec<f64>> = HashMap::new();
 
         // compute cell to cell data
-        for i in 1..num_cell - 1 {  // interior cells
+        for i in 1..num_cell - 1 {
+            // interior cells
             let cid = i as i32;
             cell_cell_id.insert(cid, vec![i as i32 - 1, i as i32 + 1]);
-            cell_cell_dist.insert(cid, vec![cell_x[&(i as i32)] - cell_x[&(i as i32 - 1)], cell_x[&(i as i32 + 1)] - cell_x[&(i as i32)]]);
+            cell_cell_dist.insert(
+                cid,
+                vec![
+                    cell_x[&(i as i32)] - cell_x[&(i as i32 - 1)],
+                    cell_x[&(i as i32 + 1)] - cell_x[&(i as i32)],
+                ],
+            );
         }
         cell_cell_id.insert(0, vec![-1, 1]); // no neighbor cell -> default to face
         cell_cell_dist.insert(0, vec![face_x[&(-1)] - cell_x[&0], cell_x[&1] - cell_x[&0]]);
-        cell_cell_id.insert(num_cell as i32 - 1, vec![(num_cell as i32 - 2), -(num_face as i32)]);
-        cell_cell_dist.insert(num_cell as i32 - 1, vec![cell_x[&(num_cell as i32 - 1)] - cell_x[&(num_cell as i32 - 2)], face_x[&(-(num_face as i32))] - cell_x[&(num_cell as i32 - 1)]]);
-    
+        cell_cell_id.insert(
+            num_cell as i32 - 1,
+            vec![(num_cell as i32 - 2), -(num_face as i32)],
+        );
+        cell_cell_dist.insert(
+            num_cell as i32 - 1,
+            vec![
+                cell_x[&(num_cell as i32 - 1)] - cell_x[&(num_cell as i32 - 2)],
+                face_x[&(-(num_face as i32))] - cell_x[&(num_cell as i32 - 1)],
+            ],
+        );
+
         // cell to face data
         let mut cell_face_id: HashMap<i32, Vec<i32>> = HashMap::new();
         let mut cell_face_dist: HashMap<i32, Vec<f64>> = HashMap::new();
@@ -182,7 +197,13 @@ impl Mesh1D {
         for i in 0..num_cell {
             let cid = i as i32;
             cell_face_id.insert(cid, vec![-(i as i32 + 1), -(i as i32 + 2)]);
-            cell_face_dist.insert(cid, vec![cell_x[&cid] - face_x[&(-(i as i32 + 1))], face_x[&(-(i as i32 + 2))] - cell_x[&cid]]);
+            cell_face_dist.insert(
+                cid,
+                vec![
+                    cell_x[&cid] - face_x[&(-(i as i32 + 1))],
+                    face_x[&(-(i as i32 + 2))] - cell_x[&cid],
+                ],
+            );
             cell_face_norm.insert(cid, vec![-1.0, 1.0]);
         }
 
@@ -191,15 +212,31 @@ impl Mesh1D {
         let mut face_cell_dist: HashMap<i32, (f64, f64)> = HashMap::new();
 
         // compute face to cell data
-        for i in 1..num_face - 1 {  // interior faces
+        for i in 1..num_face - 1 {
+            // interior faces
             let fid = -(i as i32 + 1);
             face_cell_id.insert(fid, (i as i32 - 1, i as i32));
-            face_cell_dist.insert(fid, (face_x[&fid] - cell_x[&(i as i32 - 1)], cell_x[&(i as i32)] - face_x[&fid]));
+            face_cell_dist.insert(
+                fid,
+                (
+                    face_x[&fid] - cell_x[&(i as i32 - 1)],
+                    cell_x[&(i as i32)] - face_x[&fid],
+                ),
+            );
         }
         face_cell_id.insert(-1, (-1, 0)); // no neighbor cell -> default to face
         face_cell_dist.insert(-1, (0.0, cell_x[&0] - face_x[&(-1)]));
-        face_cell_id.insert(-(num_face as i32), ((num_cell as i32 - 1), -(num_face as i32)));
-        face_cell_dist.insert(-(num_face as i32), (face_x[&(-(num_face as i32))] - cell_x[&(num_cell as i32 - 1)], 0.0));
+        face_cell_id.insert(
+            -(num_face as i32),
+            ((num_cell as i32 - 1), -(num_face as i32)),
+        );
+        face_cell_dist.insert(
+            -(num_face as i32),
+            (
+                face_x[&(-(num_face as i32))] - cell_x[&(num_cell as i32 - 1)],
+                0.0,
+            ),
+        );
 
         // return
         Mesh1D {
@@ -218,7 +255,5 @@ impl Mesh1D {
             face_cell_id,
             face_cell_dist,
         }
-
     }
-
 }

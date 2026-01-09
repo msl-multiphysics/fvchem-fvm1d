@@ -32,7 +32,6 @@ pub struct Domain1D {
 
 impl Domain1D {
     pub fn new(dom1d_id: usize, mesh: &Mesh1D) -> Domain1D {
-        
         // cell data
         let num_cell = mesh.num_cell;
         let cell_id = mesh.cell_id.clone();
@@ -47,7 +46,7 @@ impl Domain1D {
         // cell to cell data
         let cell_cell_id = mesh.cell_cell_id.clone();
         let cell_cell_dist = mesh.cell_cell_dist.clone();
-        
+
         // cell to face data
         let cell_face_id = mesh.cell_face_id.clone();
         let cell_face_dist = mesh.cell_face_dist.clone();
@@ -56,7 +55,7 @@ impl Domain1D {
         // face to cell data
         let face_cell_id = mesh.face_cell_id.clone();
         let face_cell_dist = mesh.face_cell_dist.clone();
-            
+
         // return
         Domain1D {
             dom1d_id,
@@ -76,9 +75,8 @@ impl Domain1D {
             face_cell_dist,
         }
     }
-    
-    pub fn new_from_subset(dom1d_id: usize, mesh: &Mesh1D, cell_id: Vec<i32>) -> Domain1D {
 
+    pub fn new_from_subset(dom1d_id: usize, mesh: &Mesh1D, cell_id: Vec<i32>) -> Domain1D {
         // cell data
         let num_cell = cell_id.len();
         let mut cell_x: HashMap<i32, f64> = HashMap::new();
@@ -111,24 +109,23 @@ impl Domain1D {
 
         // compute cell to cell data
         for &cid in cell_id.iter() {
-            
             // preliminary neighbor id and distances
             let mut id_sub = mesh.cell_cell_id[&cid].clone();
             let mut dist_sub = mesh.cell_cell_dist[&cid].clone();
 
             // verify that neighbor cells are in subset
             for loc in 0..2 {
-                let nid = mesh.cell_cell_id[&cid][loc];  // neighbor cell id
-                if !cell_id.contains(&nid){  // neighbor not in subset
-                    id_sub[loc] = mesh.cell_face_id[&cid][loc];  // use face id instead
-                    dist_sub[loc] = mesh.cell_face_dist[&cid][loc];  // use face distance instead
+                let nid = mesh.cell_cell_id[&cid][loc]; // neighbor cell id
+                if !cell_id.contains(&nid) {
+                    // neighbor not in subset
+                    id_sub[loc] = mesh.cell_face_id[&cid][loc]; // use face id instead
+                    dist_sub[loc] = mesh.cell_face_dist[&cid][loc]; // use face distance instead
                 }
             }
 
             // insert into cell to cell data
             cell_cell_id.insert(cid, id_sub.clone());
             cell_cell_dist.insert(cid, dist_sub.clone());
-
         }
 
         // cell to face data
@@ -149,21 +146,22 @@ impl Domain1D {
 
         // compute face to cell data
         for &fid in face_id.iter() {
-
             // preliminary neighbor ids and distances
             let mut id_sub = mesh.face_cell_id[&fid].clone();
             let mut dist_sub = mesh.face_cell_dist[&fid].clone();
 
             // verify that neighbor cells are in subset (A)
-            let cid_a = mesh.face_cell_id[&fid].0;  // neighbor cell A id
-            if !cell_id.contains(&cid_a){  // neighbor not in subset
+            let cid_a = mesh.face_cell_id[&fid].0; // neighbor cell A id
+            if !cell_id.contains(&cid_a) {
+                // neighbor not in subset
                 id_sub.0 = fid;
                 dist_sub.0 = 0.0;
             }
 
             // verify that neighbor cells are in subset (B)
-            let cid_b = mesh.face_cell_id[&fid].1;  // neighbor cell B id
-            if !cell_id.contains(&cid_b){  // neighbor not in subset
+            let cid_b = mesh.face_cell_id[&fid].1; // neighbor cell B id
+            if !cell_id.contains(&cid_b) {
+                // neighbor not in subset
                 id_sub.1 = fid;
                 dist_sub.1 = 0.0;
             }
@@ -171,7 +169,6 @@ impl Domain1D {
             // insert into face to cell data
             face_cell_id.insert(fid, id_sub.clone());
             face_cell_dist.insert(fid, dist_sub.clone());
-
         }
 
         // return
@@ -193,5 +190,4 @@ impl Domain1D {
             face_cell_dist,
         }
     }
-
 }
