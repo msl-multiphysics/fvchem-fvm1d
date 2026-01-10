@@ -1,4 +1,5 @@
 use crate::domain_1d::Domain1D;
+use crate::error_1d::Error1D;
 use crate::variable_1d::Variable1D;
 use std::collections::HashMap;
 use std::fs::File;
@@ -35,7 +36,7 @@ impl Scalar1D {
         value: f64,
         output_file: String,
         output_step: usize,
-    ) -> Scalar1D {
+    ) -> Result<Scalar1D, Error1D> {
         // get struct ids
         let dom1d_id = dom1d.dom1d_id;
         let var1d_id: Vec<usize> = Vec::new();
@@ -62,7 +63,7 @@ impl Scalar1D {
         let value_func = |_, _, _| 0.0;
 
         // return
-        Scalar1D {
+        Ok(Scalar1D {
             scl1d_id,
             dom1d_id,
             var1d_id,
@@ -75,7 +76,7 @@ impl Scalar1D {
             output_file,
             is_constant,
             value_func,
-        }
+        })
     }
 
     pub fn new_nonconstant(
@@ -86,7 +87,7 @@ impl Scalar1D {
         value_func: fn(f64, f64, Vec<f64>) -> f64,
         output_file: String,
         output_step: usize,
-    ) -> Scalar1D {
+    ) -> Result<Scalar1D, Error1D> {
         // get struct ids
         let dom1d_id = dom1d.dom1d_id;
 
@@ -131,7 +132,7 @@ impl Scalar1D {
         let is_constant = false;
 
         // return
-        Scalar1D {
+        Ok(Scalar1D {
             scl1d_id,
             dom1d_id,
             var1d_id,
@@ -144,7 +145,7 @@ impl Scalar1D {
             output_file,
             is_constant,
             value_func,
-        }
+        })
     }
 
     pub fn update_iter(dom: &Domain1D, scl: &mut Scalar1D, var_all: &Vec<Variable1D>) {

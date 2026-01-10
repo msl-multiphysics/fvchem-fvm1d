@@ -17,12 +17,12 @@ fn main() {
         let x_new = x_face[i] + dx;
         x_face.push(x_new);
     }
-    let mesh = Mesh1D::new_from_face(x_face);
+    let mesh = Mesh1D::new_from_face(x_face).unwrap();
 
     // add domain
-    let dom = Problem1D::add_dom1d(&mut prob, &mesh);
-    let dom_l = Problem1D::add_dom0d(&mut prob, dom, 0, 0);
-    let dom_r = Problem1D::add_dom0d(&mut prob, dom, 19, 1);
+    let dom = Problem1D::add_dom1d(&mut prob, &mesh).unwrap();
+    let dom_l = Problem1D::add_dom0d(&mut prob, dom, 0, 0).unwrap();
+    let dom_r = Problem1D::add_dom0d(&mut prob, dom, 19, 1).unwrap();
 
     // add properties
     create_dir_all("examples/output_mesh_fromface").unwrap();
@@ -32,16 +32,16 @@ fn main() {
         1.0,
         "examples/output_mesh_fromface/c".to_string(),
         0,
-    );
-    let d = Problem1D::add_scl1d(&mut prob, dom, 0.1, "".to_string(), 0);
-    let r = Problem1D::add_scl1d(&mut prob, dom, 2.0, "".to_string(), 0);
-    let c_l = Problem1D::add_scl0d(&mut prob, dom_l, 1.0, "".to_string(), 0);
-    let n_r = Problem1D::add_scl0d(&mut prob, dom_r, 0.5, "".to_string(), 0);
+    ).unwrap();
+    let d = Problem1D::add_scl1d(&mut prob, dom, 0.1, "".to_string(), 0).unwrap();
+    let r = Problem1D::add_scl1d(&mut prob, dom, 2.0, "".to_string(), 0).unwrap();
+    let c_l = Problem1D::add_scl0d(&mut prob, dom_l, 1.0, "".to_string(), 0).unwrap();
+    let n_r = Problem1D::add_scl0d(&mut prob, dom_r, 0.5, "".to_string(), 0).unwrap();
 
     // create steady diffusion solver
     let mut solver = SteadyDiff::new();
     solver.add_domain(dom, c, d, r);
     solver.add_boundary_concentration(dom_l, c_l);
     solver.add_boundary_flux(dom_r, n_r);
-    solver.solve(&mut prob, 1000, 1e-6, 0.5);
+    solver.solve(&mut prob, 100, 1e-6, 0.5).unwrap();
 }

@@ -1,3 +1,4 @@
+use crate::error_1d::Error1D;
 use crate::mesh_1d::Mesh1D;
 use std::collections::{HashMap, HashSet};
 
@@ -31,7 +32,7 @@ pub struct Domain1D {
 }
 
 impl Domain1D {
-    pub fn new(dom1d_id: usize, mesh: &Mesh1D) -> Domain1D {
+    pub fn new(dom1d_id: usize, mesh: &Mesh1D) -> Result<Domain1D, Error1D> {
         // cell data
         let num_cell = mesh.num_cell;
         let cell_id = mesh.cell_id.clone();
@@ -57,7 +58,7 @@ impl Domain1D {
         let face_cell_dist = mesh.face_cell_dist.clone();
 
         // return
-        Domain1D {
+       Ok(Domain1D {
             dom1d_id,
             num_cell,
             cell_id,
@@ -73,10 +74,13 @@ impl Domain1D {
             cell_face_norm,
             face_cell_id,
             face_cell_dist,
-        }
+        })
     }
 
-    pub fn new_from_subset(dom1d_id: usize, mesh: &Mesh1D, cell_id: Vec<i32>) -> Domain1D {
+    pub fn new_from_subset(dom1d_id: usize, mesh: &Mesh1D, cell_id: Vec<i32>) -> Result<Domain1D, Error1D> {
+        // error checking
+        Self::check_cell_id(&mesh, &cell_id)?;
+        
         // cell data
         let num_cell = cell_id.len();
         let mut cell_x: HashMap<i32, f64> = HashMap::new();
@@ -172,7 +176,7 @@ impl Domain1D {
         }
 
         // return
-        Domain1D {
+        Ok(Domain1D {
             dom1d_id,
             num_cell,
             cell_id,
@@ -188,6 +192,15 @@ impl Domain1D {
             cell_face_norm,
             face_cell_id,
             face_cell_dist,
+        })
+    }
+
+    fn check_cell_id(mesh: &Mesh1D, cell_id: &Vec<i32>) -> Result<(), Error1D> {
+        for &cid in cell_id.iter() {
+            if !mesh.cell_id.contains(&cid) {
+                return Err(Error1D::InvalidCellID {caller: "Domain1D".to_string(), cid, parent: "Mesh1D".to_string()});
+            }
         }
+        Ok(())
     }
 }

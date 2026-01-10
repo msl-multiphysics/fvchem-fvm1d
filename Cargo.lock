@@ -322,6 +322,7 @@ name = "fvchem-fvm1d"
 version = "0.1.0"
 dependencies = [
  "faer",
+ "thiserror",
 ]
 
 [[package]]

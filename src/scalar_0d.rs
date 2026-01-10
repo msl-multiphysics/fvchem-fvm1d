@@ -1,4 +1,5 @@
 use crate::domain_0d::Domain0D;
+use crate::error_1d::Error1D;
 use crate::variable_1d::Variable1D;
 use std::fs::File;
 use std::io::Write;
@@ -30,7 +31,7 @@ impl Scalar0D {
         value: f64,
         output_file: String,
         output_step: usize,
-    ) -> Scalar0D {
+    ) -> Result<Scalar0D, Error1D> {
         // get struct ids
         let dom0d_id = dom0d.dom0d_id;
         let var1d_id: Vec<usize> = Vec::new();
@@ -47,7 +48,7 @@ impl Scalar0D {
         let value_func = |_, _, _| 0.0;
 
         // return
-        Scalar0D {
+        Ok(Scalar0D {
             scl0d_id,
             dom0d_id,
             var1d_id,
@@ -58,7 +59,7 @@ impl Scalar0D {
             output_file,
             is_constant,
             value_func,
-        }
+        })
     }
 
     pub fn new_nonconstant(
@@ -69,7 +70,7 @@ impl Scalar0D {
         value_func: fn(f64, f64, Vec<f64>) -> f64,
         output_file: String,
         output_step: usize,
-    ) -> Scalar0D {
+    ) -> Result<Scalar0D, Error1D> {
         // get struct ids
         let dom0d_id = dom0d.dom0d_id;
 
@@ -91,7 +92,7 @@ impl Scalar0D {
         let is_constant = false;
 
         // return
-        Scalar0D {
+        Ok(Scalar0D {
             scl0d_id,
             dom0d_id,
             var1d_id,
@@ -102,7 +103,7 @@ impl Scalar0D {
             output_file,
             is_constant,
             value_func,
-        }
+        })
     }
 
     pub fn update_iter(dom: &Domain0D, scl: &mut Scalar0D, var_all: &Vec<Variable1D>) {
@@ -144,7 +145,7 @@ impl Scalar0D {
 
     pub fn write_transient(dom: &Domain0D, scl: &Scalar0D, ts: usize) {
         // output only if specified
-        if !scl.is_output || ts % scl.output_step != 0 {
+        if !scl.is_output || scl.output_step <= 0|| ts % scl.output_step != 0 {
             return;
         }
 

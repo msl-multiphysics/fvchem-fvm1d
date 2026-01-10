@@ -1,4 +1,5 @@
 use crate::domain_1d::Domain1D;
+use crate::error_1d::Error1D;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
@@ -32,7 +33,7 @@ impl Variable1D {
         value_init: f64,
         output_file: String,
         output_step: usize,
-    ) -> Variable1D {
+    ) -> Result<Variable1D, Error1D> {
         // get struct ids
         let dom1d_id = dom1d.dom1d_id;
 
@@ -63,7 +64,7 @@ impl Variable1D {
         let is_output = !output_file.is_empty() || output_step > 0;
 
         // return
-        Variable1D {
+        Ok(Variable1D {
             var1d_id,
             dom1d_id,
             cell_value,
@@ -74,7 +75,7 @@ impl Variable1D {
             is_output,
             output_step,
             output_file,
-        }
+        })
     }
 
     pub fn update_prev(var: &mut Variable1D) {

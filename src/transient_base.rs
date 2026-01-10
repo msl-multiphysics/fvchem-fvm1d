@@ -1,3 +1,4 @@
+use crate::error_1d::Error1D;
 use crate::problem_1d::Problem1D;
 use crate::scalar_0d::Scalar0D;
 use crate::scalar_1d::Scalar1D;
@@ -48,9 +49,12 @@ pub trait TransientBase {
         max_iter: usize,
         tol_l2: f64,
         damping: f64,
-    ) {
+    ) -> Result<(), Error1D> {
         let time_start = Instant::now();
         println!("Starting transient solver.");
+
+        // error checking
+        self.check_settings(dt, num_ts, max_iter, damping)?;
 
         // initialize time measurement
         let mut time_assemble = Duration::ZERO;
@@ -77,7 +81,8 @@ pub trait TransientBase {
             let time_1 = Instant::now();
 
             // iterate to convergence
-            for iter in 0..max_iter {
+            let mut iter = 0;
+            while iter < max_iter {
                 let time_i0 = Instant::now();
 
                 // update scalars
@@ -93,11 +98,16 @@ pub trait TransientBase {
                 let time_i2 = Instant::now();
 
                 // solve linear system
-                let a_mat = SparseColMat::<usize, f64>::try_new_from_triplets(
-                    mat_size, mat_size, &a_triplet,
-                )
-                .expect("Failed to create sparse matrix from triplets.");
-                let lu = a_mat.sp_lu().expect("Failed to perform LU decomposition.");
+                let a_mat = SparseColMat::<usize, f64>::try_new_from_triplets(mat_size, mat_size, &a_triplet);
+                let a_mat = match a_mat {
+                    Ok(mat) => mat,
+                    Err(_) => return Err(Error1D::FailedMatrixAssembly {caller: "SteadyBase".to_string()}),
+                };
+                let lu = a_mat.sp_lu();
+                let lu = match lu {
+                    Ok(decomp) => decomp,
+                    Err(_) => return Err(Error1D::FailedLUDecomposition {caller: "SteadyBase".to_string()}),
+                };
                 let x_undamp_vec = lu.solve(&b_vec); // undamped solution vector
                 let x_vec = (1.0 - damping) * &x_iter_vec + damping * x_undamp_vec; // damped solution vector
 
@@ -122,7 +132,13 @@ pub trait TransientBase {
                 time_assemble += time_i2.duration_since(time_i1);
                 time_solve += time_i3.duration_since(time_i2);
                 time_update += time_i1.duration_since(time_i0) + time_i4.duration_since(time_i3);
+            
+                // increment iteration
+                iter += 1;
             }
+
+            // check convergence
+            self.check_convergence(iter, max_iter)?;
 
             let time_2 = Instant::now();
 
@@ -146,6 +162,9 @@ pub trait TransientBase {
         println!("  Solve time: {:.6} s", time_solve.as_secs_f64());
         println!("  Update time: {:.6} s", time_update.as_secs_f64());
         println!("  Write time: {:.6} s", time_write.as_secs_f64());
+
+        // return
+        Ok(())
     }
 
     fn resize_vector(
@@ -251,4 +270,28 @@ pub trait TransientBase {
             Variable1D::write_transient(&prob.dom1d[var.dom1d_id], var, ts);
         }
     }
+
+    fn check_settings(&self, dt: f64, num_ts: usize, max_iter: usize, damping: f64) -> Result<(), Error1D> {
+        if dt <= 0.0 {
+            return Err(Error1D::InvalidTimeStep {caller: "Problem1D".to_string(), dt})
+        }
+        if num_ts < 1 {
+            return Err(Error1D::InvalidNumTimeSteps {caller: "Problem1D".to_string(), num_ts})
+        }
+        if max_iter < 2 {
+            return Err(Error1D::InvalidMaxIter {caller: "Problem1D".to_string(), max_iter})
+        }
+        if damping <= 0.0 || damping > 1.0 {
+            return Err(Error1D::InvalidDamping {caller: "Problem1D".to_string(), damping})
+        }
+        Ok(())
+    }
+
+    fn check_convergence(&self, iter: usize, max_iter: usize) -> Result<(), Error1D> {
+        if iter >= max_iter {
+            return Err(Error1D::FailedConvergence {caller: "SteadyBase".to_string(), max_iter})
+        }
+        Ok(())
+    }
+
 }

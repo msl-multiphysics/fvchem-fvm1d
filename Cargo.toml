@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 faer = "0.23"
+thiserror = "1"
 
 [profile.dev.package.faer]
 opt-level = 3

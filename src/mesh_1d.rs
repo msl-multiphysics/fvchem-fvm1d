@@ -1,3 +1,4 @@
+use crate::error_1d::Error1D;
 use std::collections::HashMap;
 
 pub struct Mesh1D {
@@ -27,7 +28,11 @@ pub struct Mesh1D {
 }
 
 impl Mesh1D {
-    pub fn new(x_min: f64, x_max: f64, num_cell: usize) -> Mesh1D {
+    pub fn new(x_min: f64, x_max: f64, num_cell: usize) -> Result<Mesh1D, Error1D> {
+        // error checking
+        Self::check_bounds(x_min, x_max)?;
+        Self::check_num_cell(num_cell)?;
+
         // cell data
         let mut cell_id: Vec<i32> = Vec::new();
         let mut cell_x: HashMap<i32, f64> = HashMap::new();
@@ -108,7 +113,7 @@ impl Mesh1D {
         face_cell_dist.insert(-(num_face as i32), (0.5 * dx, 0.0));
 
         // return
-        Mesh1D {
+        Ok(Mesh1D {
             num_cell,
             cell_id,
             cell_x,
@@ -123,10 +128,13 @@ impl Mesh1D {
             cell_face_norm,
             face_cell_id,
             face_cell_dist,
-        }
+        })
     }
 
-    pub fn new_from_face(face_x_vec: Vec<f64>) -> Mesh1D {
+    pub fn new_from_face(face_x_vec: Vec<f64>) -> Result<Mesh1D, Error1D> {
+        // error checking
+        Self::check_face_x(&face_x_vec)?;
+
         // sort face positions
         let mut face_x_sort = face_x_vec.clone();
         face_x_sort.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -152,9 +160,11 @@ impl Mesh1D {
         let num_cell = num_face - 1;
         for i in 0..num_cell {
             let cid = i as i32; // cell id: 0 to num_cell-1
+            let dx = face_x_sort[i + 1] - face_x_sort[i];
             cell_id.push(cid);
             cell_x.insert(cid, 0.5 * (face_x_sort[i] + face_x_sort[i + 1]));
-            cell_dx.insert(cid, face_x_sort[i + 1] - face_x_sort[i]);
+            cell_dx.insert(cid, dx);
+            Self::check_cell_dx(dx)?;  // check cell size > 0
         }
 
         // cell to cell data
@@ -239,7 +249,7 @@ impl Mesh1D {
         );
 
         // return
-        Mesh1D {
+        Ok(Mesh1D {
             num_cell,
             cell_id,
             cell_x,
@@ -254,6 +264,39 @@ impl Mesh1D {
             cell_face_norm,
             face_cell_id,
             face_cell_dist,
-        }
+        })
     }
+
+    fn check_bounds(x_min: f64, x_max: f64) -> Result<(), Error1D> {
+        if x_max <= x_min {
+            return Err(Error1D::InvalidBoundsX {
+                caller: "Mesh1D".to_string(),
+                x_min: x_min,
+                x_max: x_max,
+            });
+        }
+        Ok(())
+    }
+
+    fn check_num_cell(num_cell: usize) -> Result<(), Error1D> {
+        if num_cell < 1 {
+            return Err(Error1D::InvalidCellCount {caller: "Mesh1D".to_string()});
+        }
+        Ok(())
+    }
+    
+    fn check_face_x(face_x: &Vec<f64>) -> Result<(), Error1D> {
+        if face_x.len() < 2 {
+            return Err(Error1D::InvalidCellCount {caller: "Mesh1D".to_string()});
+        }
+        Ok(())
+    }
+
+    fn check_cell_dx(dx: f64) -> Result<(), Error1D> {
+        if dx <= 0.0 {
+            return Err(Error1D::InvalidCellSize {caller: "Mesh1D".to_string()});
+        }
+        Ok(())
+    }
+
 }
