@@ -18,10 +18,6 @@ numA_df = pd.read_csv('fvchem_fvm1d/examples/output_steady_diff_itrmtrn/ca_face.
 numB_df = pd.read_csv('fvchem_fvm1d/examples/output_steady_diff_itrmtrn/cb_face.csv')
 xA_num, cA_num = numA_df['x'].values, numA_df['u'].values
 xB_num, cB_num = numB_df['x'].values, numB_df['u'].values
-idxA = np.argsort(xA_num)
-idxB = np.argsort(xB_num)
-xA_num, cA_num = xA_num[idxA], cA_num[idxA]
-xB_num, cB_num = xB_num[idxB], cB_num[idxB]
 
 # analytical solution
 c3 = cL

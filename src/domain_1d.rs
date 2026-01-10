@@ -35,14 +35,20 @@ impl Domain1D {
     pub fn new(dom1d_id: usize, mesh: &Mesh1D) -> Result<Domain1D, Error1D> {
         // cell data
         let num_cell = mesh.num_cell;
-        let cell_id = mesh.cell_id.clone();
+        let mut cell_id = mesh.cell_id.clone();
         let cell_x = mesh.cell_x.clone();
         let cell_dx = mesh.cell_dx.clone();
 
+        // sort cell_id so that cell_x is increasing
+        cell_id.sort_by(|a, b| cell_x[a].partial_cmp(&cell_x[b]).unwrap());
+
         // face data
         let num_face = mesh.num_face;
-        let face_id = mesh.face_id.clone();
+        let mut face_id = mesh.face_id.clone();
         let face_x = mesh.face_x.clone();
+
+        // sort face_id so that face_x is increasing
+        face_id.sort_by(|a, b| face_x[a].partial_cmp(&face_x[b]).unwrap());
 
         // cell to cell data
         let cell_cell_id = mesh.cell_cell_id.clone();
@@ -77,7 +83,7 @@ impl Domain1D {
         })
     }
 
-    pub fn new_from_subset(dom1d_id: usize, mesh: &Mesh1D, cell_id: Vec<i32>) -> Result<Domain1D, Error1D> {
+    pub fn new_from_subset(dom1d_id: usize, mesh: &Mesh1D, mut cell_id: Vec<i32>) -> Result<Domain1D, Error1D> {
         // error checking
         Self::check_cell_id(&mesh, &cell_id)?;
         
@@ -92,6 +98,9 @@ impl Domain1D {
             cell_dx.insert(cid, mesh.cell_dx[&cid]);
         }
 
+        // sort cell_id so that cell_x is increasing
+        cell_id.sort_by(|a, b| cell_x[a].partial_cmp(&cell_x[b]).unwrap());
+
         // compute face data
         let mut face_id_set: HashSet<i32> = HashSet::new();
         for &cid in cell_id.iter() {
@@ -100,12 +109,15 @@ impl Domain1D {
                 face_id_set.insert(fid);
             }
         }
-        let face_id: Vec<i32> = face_id_set.into_iter().collect();
+        let mut face_id: Vec<i32> = face_id_set.into_iter().collect();
         let num_face = face_id.len();
         let mut face_x: HashMap<i32, f64> = HashMap::new();
         for &fid in face_id.iter() {
             face_x.insert(fid, mesh.face_x[&fid]);
         }
+
+        // sort face_id so that face_x is increasing
+        face_id.sort_by(|a, b| face_x[a].partial_cmp(&face_x[b]).unwrap());
 
         // cell to cell data
         let mut cell_cell_id: HashMap<i32, Vec<i32>> = HashMap::new();

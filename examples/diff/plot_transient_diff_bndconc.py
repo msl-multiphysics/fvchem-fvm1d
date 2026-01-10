@@ -39,8 +39,6 @@ for i in range(num_step):
     # get data
     num_df = pd.read_csv(f'fvchem_fvm1d/examples/output_transient_diff_bndconc/c_face_{ts_every * i}.csv')
     x_num, c_num = num_df['x'].values, num_df['u'].values
-    idx = np.argsort(x_num)
-    x_num, c_num = x_num[idx], c_num[idx]
 
     # plot results
     if i == num_step - 1:

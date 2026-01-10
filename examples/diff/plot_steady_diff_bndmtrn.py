@@ -13,8 +13,6 @@ cR = 1.00  # right boundary concentration
 # numerical solution
 num_df = pd.read_csv('fvchem_fvm1d/examples/output_steady_diff_bndmtrn/c_face.csv')
 x_num, c_num = num_df['x'].values, num_df['u'].values
-idx = np.argsort(x_num)
-x_num, c_num = x_num[idx], c_num[idx]
 
 # analytical solution
 a_mat = np.array([[1, k], [-L/D, 1]])

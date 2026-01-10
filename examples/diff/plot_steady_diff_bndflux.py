@@ -12,8 +12,6 @@ NR = 0.50  # right boundary flux
 # numerical solution
 num_df = pd.read_csv('fvchem_fvm1d/examples/output_steady_diff_bndflux/c_face.csv')
 x_num, c_num = num_df['x'].values, num_df['u'].values
-idx = np.argsort(x_num)
-x_num, c_num = x_num[idx], c_num[idx]
 
 # analytical solution
 x_ana = np.linspace(0, L, 100)
