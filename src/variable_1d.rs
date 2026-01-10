@@ -96,8 +96,8 @@ impl Variable1D {
         for &cid in dom.cell_id.iter() {
             writeln!(
                 file_cell,
-                "{:.6},{:.6}",
-                dom.cell_x[&cid], var.cell_value[&cid]
+                "{},{:.6},{:.6}",
+                cid, dom.cell_x[&cid], var.cell_value[&cid]
             )
             .unwrap();
         }
@@ -108,8 +108,8 @@ impl Variable1D {
         for &fid in dom.face_id.iter() {
             writeln!(
                 file_face,
-                "{:.6},{:.6}",
-                dom.face_x[&fid], var.face_value[&fid]
+                "{},{:.6},{:.6}",
+                fid, dom.face_x[&fid], var.face_value[&fid]
             )
             .unwrap();
         }
@@ -128,8 +128,8 @@ impl Variable1D {
         for &cid in dom.cell_id.iter() {
             writeln!(
                 file_cell,
-                "{:.6},{:.6}",
-                dom.cell_x[&cid], var.cell_value[&cid]
+                "{},{:.6},{:.6}",
+                cid, dom.cell_x[&cid], var.cell_value[&cid]
             )
             .unwrap();
         }
@@ -141,8 +141,8 @@ impl Variable1D {
         for &fid in dom.face_id.iter() {
             writeln!(
                 file_face,
-                "{:.6},{:.6}",
-                dom.face_x[&fid], var.face_value[&fid]
+                "{},{:.6},{:.6}",
+                fid, dom.face_x[&fid], var.face_value[&fid]
             )
             .unwrap();
         }

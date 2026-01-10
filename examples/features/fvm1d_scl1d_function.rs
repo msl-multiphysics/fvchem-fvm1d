@@ -18,21 +18,21 @@ fn main() {
     let dom_r = Problem1D::add_dom0d(&mut prob, dom, 19, 1).unwrap();
 
     // add properties
-    create_dir_all("examples/output_scl1d_nonconstant").unwrap();
+    create_dir_all("examples/output_scl1d_function").unwrap();
     let c = Problem1D::add_var1d(
         &mut prob,
         dom,
         1.0,
-        "examples/output_scl1d_nonconstant/c".to_string(),
+        "examples/output_scl1d_function/c".to_string(),
         0,
     ).unwrap();
     let d = Problem1D::add_scl1d(&mut prob, dom, 0.1, "".to_string(), 0).unwrap();
-    let r = Problem1D::add_scl1d_nonconstant(
+    let r = Problem1D::add_scl1d_from_function(
         &mut prob,
         dom,
         r_func,
         vec![c],
-        "examples/output_scl1d_nonconstant/r".to_string(),
+        "examples/output_scl1d_function/r".to_string(),
         0,
     ).unwrap();
     let c_l = Problem1D::add_scl0d(&mut prob, dom_l, 1.0, "".to_string(), 0).unwrap();

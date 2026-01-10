@@ -81,4 +81,16 @@ pub enum Error1D {
         num_ts: usize,
     },
 
+    #[error("{caller}: File not found: {file_path}.")]
+    FileNotFound {
+        caller: String,
+        file_path: String,
+    },
+
+    #[error("{caller}: Failed to read from file: {file_path}.")]
+    FileReadError {
+        caller: String,
+        file_path: String,
+    },
+
 }

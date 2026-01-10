@@ -14,6 +14,7 @@ pub use crate::transient_diffadv::*;
 pub mod domain_0d;
 pub mod domain_1d;
 pub mod error_1d;
+pub mod input_1d;
 pub mod limiter_1d;
 pub mod mesh_1d;
 pub mod problem_1d;
@@ -26,6 +27,7 @@ pub mod variable_1d;
 // main re-exports
 pub use crate::domain_0d::*;
 pub use crate::domain_1d::*;
+pub use crate::error_1d::*;
 pub use crate::mesh_1d::*;
 pub use crate::problem_1d::*;
 pub use crate::scalar_0d::*;

@@ -81,11 +81,11 @@ impl Problem1D {
         Ok(scl0d_id)
     }
 
-    pub fn add_scl0d_nonconstant(
+    pub fn add_scl0d_from_function(
         prob: &mut Problem1D,
         dom0d_id: usize,
         value_func: fn(f64, f64, Vec<f64>) -> f64,
-        var1d_id: Vec<usize>,
+        value_var: Vec<usize>,
         output_file: String,
         output_step: usize,
     ) -> Result<usize, Error1D> {
@@ -94,12 +94,12 @@ impl Problem1D {
 
         // create Scalar0D
         let dom0d = &prob.dom0d[dom0d_id];
-        let scl0d = Scalar0D::new_nonconstant(
+        let scl0d = Scalar0D::new_from_function(
             scl0d_id,
             dom0d,
             &prob.var1d,
-            var1d_id,
             value_func,
+            value_var,
             output_file,
             output_step,
         )?;
@@ -128,11 +128,11 @@ impl Problem1D {
         Ok(scl1d_id)
     }
 
-    pub fn add_scl1d_nonconstant(
+    pub fn add_scl1d_from_function(
         prob: &mut Problem1D,
         dom1d_id: usize,
         value_func: fn(f64, f64, Vec<f64>) -> f64,
-        var1d_id: Vec<usize>,
+        value_var: Vec<usize>,
         output_file: String,
         output_step: usize,
     ) -> Result<usize, Error1D> {
@@ -141,12 +141,12 @@ impl Problem1D {
 
         // create Scalar1D
         let dom1d = &prob.dom1d[dom1d_id];
-        let scl1d = Scalar1D::new_nonconstant(
+        let scl1d = Scalar1D::new_from_function(
             scl1d_id,
             dom1d,
             &prob.var1d,
-            var1d_id,
             value_func,
+            value_var,
             output_file,
             output_step,
         )?;

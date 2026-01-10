@@ -14,7 +14,7 @@ c0 = 2.00  # non-constant source term 2
 ### concentration profile
 
 # numerical solution
-num_df = pd.read_csv('fvchem_fvm1d/examples/output_scl1d_nonconstant/c_face.csv')
+num_df = pd.read_csv('fvchem_fvm1d/examples/output_scl1d_function/c_face.csv')
 x_num, c_num = num_df['x'].values, num_df['u'].values
 
 # analytical solution
@@ -41,7 +41,7 @@ plt.show()
 ### source term profile
 
 # numerical solution
-num_df = pd.read_csv('fvchem_fvm1d/examples/output_scl1d_nonconstant/r_face.csv')
+num_df = pd.read_csv('fvchem_fvm1d/examples/output_scl1d_function/r_face.csv')
 x_num, r_num = num_df['x'].values, num_df['u'].values
 idx = np.argsort(x_num)
 x_num, r_num = x_num[idx], r_num[idx]

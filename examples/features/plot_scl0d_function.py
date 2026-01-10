@@ -11,7 +11,7 @@ cextL = 1.00  # left external concentration
 cR = 1.00  # right boundary concentration
 
 # numerical solution
-num_df = pd.read_csv('fvchem_fvm1d/examples/output_scl0d_nonconstant/c_face.csv')
+num_df = pd.read_csv('fvchem_fvm1d/examples/output_scl0d_function/c_face.csv')
 x_num, c_num = num_df['x'].values, num_df['u'].values
 
 # analytical solution

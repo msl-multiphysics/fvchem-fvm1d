@@ -18,18 +18,18 @@ fn main() {
     let dom_r = Problem1D::add_dom0d(&mut prob, dom, 19, 1).unwrap();
 
     // add properties
-    create_dir_all("examples/output_scl0d_nonconstant").unwrap();
+    create_dir_all("examples/output_scl0d_function").unwrap();
     let c = Problem1D::add_var1d(
         &mut prob,
         dom,
         0.0,
-        "examples/output_scl0d_nonconstant/c".to_string(),
+        "examples/output_scl0d_function/c".to_string(),
         0,
     ).unwrap();
     let d = Problem1D::add_scl1d(&mut prob, dom, 0.1, "".to_string(), 0).unwrap();
     let r = Problem1D::add_scl1d(&mut prob, dom, 2.0, "".to_string(), 0).unwrap();
     let n_l =
-        Problem1D::add_scl0d_nonconstant(&mut prob, dom_l, mtrn_func, vec![c], "".to_string(), 0).unwrap();
+        Problem1D::add_scl0d_from_function(&mut prob, dom_l, mtrn_func, vec![c], "".to_string(), 0).unwrap();
     let c_r = Problem1D::add_scl0d(&mut prob, dom_r, 1.0, "".to_string(), 0).unwrap();
 
     // create steady diffusion solver
