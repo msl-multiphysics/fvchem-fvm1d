@@ -6,17 +6,21 @@ import pandas as pd
 # settings
 x_min = 0.0
 dx_list = [0.2, 0.5, 0.3]  # lengths of segments
-nc_list = [10, 20, 10]  # number of cells
+nc_list = [10, 20, 15]  # number of cells
 
 # create input file directory
 os.makedirs('fvchem_fvm1d/examples/input_mesh_file', exist_ok=True)
 
 # face data
-face_x = np.concatenate([
-    np.linspace(x_min + sum(dx_list[:0]), x_min + sum(dx_list[:1]), nc_list[0] + 1)[:-1],
-    np.linspace(x_min + sum(dx_list[:1]), x_min + sum(dx_list[:2]), nc_list[1] + 1)[:-1],
-    np.linspace(x_min + sum(dx_list[:2]), x_min + sum(dx_list[:3]), nc_list[2] + 1)
-])
+face_x_list = []
+for i in range(len(nc_list)):
+    start_x = x_min + sum(dx_list[:i])
+    end_x = x_min + sum(dx_list[:i+1])
+    face_x_seg = np.linspace(start_x, end_x, nc_list[i] + 1)
+    if i > 0:
+        face_x_seg = face_x_seg[1:]  # avoid duplicate face at segment boundary
+    face_x_list.append(face_x_seg)
+face_x = np.concatenate(face_x_list)
 num_face = face_x.size
 face_id = -np.arange(1, num_face + 1)
 pd.DataFrame({'fid': face_id, 'x': face_x}).to_csv('fvchem_fvm1d/examples/input_mesh_file/mesh_face.csv', index=False)
@@ -32,7 +36,7 @@ pd.DataFrame({'cid': cell_id, 'x': cell_x, 'dx': cell_dx}).to_csv('fvchem_fvm1d/
 cc_nid0 = np.concatenate([[-1], np.arange(num_cell - 1)])
 cc_nid1 = np.concatenate([np.arange(1, num_cell), [-num_face]])
 cc_dist0 = np.concatenate([[cell_x[0] - face_x[0]], cell_x[1:] - cell_x[:-1]])
-cc_dist1 = np.concatenate([cell_x[:-1] - face_x[1:-1], [face_x[-1] - cell_x[-1]]])
+cc_dist1 = np.concatenate([cell_x[1:] - cell_x[:-1], [face_x[-1] - cell_x[-1]]])
 pd.DataFrame({'cid': cell_id, 'nid_0': cc_nid0, 'nid_1': cc_nid1, 'dist_0': cc_dist0, 'dist_1': cc_dist1}).to_csv('fvchem_fvm1d/examples/input_mesh_file/mesh_cell_cell.csv', index=False)
 
 # cell-face data
