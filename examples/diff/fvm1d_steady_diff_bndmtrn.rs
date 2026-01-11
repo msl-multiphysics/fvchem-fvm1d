@@ -2,29 +2,25 @@ use fvchem_fvm1d::*;
 use std::fs::create_dir_all;
 
 fn main() {
-    // create problem
-    let mut prob = Problem1D::new();
+    // create mesh
+    create_dir_all("examples/output_steady_diff_bndmtrn").unwrap();
+    let mesh = Mesh1D::new(0.0, 1.0, 20).unwrap();
+    // mesh.write("examples/output_steady_diff_bndmtrn/mesh".to_string()).unwrap();
 
     // add domain
-    let mesh = Mesh1D::new(0.0, 1.0, 20).unwrap();
-    let dom = Problem1D::add_dom1d(&mut prob, &mesh).unwrap();
-    let dom_l = Problem1D::add_dom0d(&mut prob, dom, 0, 0).unwrap();
-    let dom_r = Problem1D::add_dom0d(&mut prob, dom, 19, 1).unwrap();
+    let mut prob = Problem1D::new();
+    let dom = prob.add_dom1d(&mesh).unwrap();
+    let dom_l = prob.add_dom0d(dom, 0, 0).unwrap();
+    let dom_r = prob.add_dom0d(dom, 19, 1).unwrap();
 
     // add properties
-    create_dir_all("examples/output_steady_diff_bndmtrn").unwrap();
-    let c = Problem1D::add_var1d(
-        &mut prob,
-        dom,
-        1.0,
-        "examples/output_steady_diff_bndmtrn/c".to_string(),
-        0,
-    ).unwrap();
-    let d = Problem1D::add_scl1d(&mut prob, dom, 0.1, "".to_string(), 0).unwrap();
-    let r = Problem1D::add_scl1d(&mut prob, dom, 2.0, "".to_string(), 0).unwrap();
-    let k_l = Problem1D::add_scl0d(&mut prob, dom_l, 0.2, "".to_string(), 0).unwrap();
-    let cext_l = Problem1D::add_scl0d(&mut prob, dom_l, 1.0, "".to_string(), 0).unwrap();
-    let c_r = Problem1D::add_scl0d(&mut prob, dom_r, 1.0, "".to_string(), 0).unwrap();
+    let c = prob.add_var1d(dom, 1.0).unwrap();
+    let d = prob.add_scl1d(dom, 0.1).unwrap();
+    let r = prob.add_scl1d(dom, 2.0).unwrap();
+    let k_l = prob.add_scl0d(dom_l, 0.2).unwrap();
+    let cext_l = prob.add_scl0d(dom_l, 1.0).unwrap();
+    let c_r = prob.add_scl0d(dom_r, 1.0).unwrap();
+    prob.set_var1d_write_steady(c, "examples/output_steady_diff_bndmtrn/c".to_string());
 
     // create steady diffusion solver
     let mut solver = SteadyDiff::new();
