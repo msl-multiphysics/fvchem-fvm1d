@@ -85,7 +85,11 @@ impl Domain1D {
 
     pub fn new_from_subset(dom1d_id: usize, mesh: &Mesh1D, mut cell_id: Vec<i32>) -> Result<Domain1D, Error1D> {
         // error checking
-        Self::check_cell_id(&mesh, &cell_id)?;
+        for &cid in cell_id.iter() {
+            if !mesh.cell_id.contains(&cid) {
+                return Err(Error1D::InvalidCellID {caller: "Domain1D".to_string(), cid, parent: "Mesh1D".to_string()});
+            }
+        }
         
         // cell data
         let num_cell = cell_id.len();
@@ -207,12 +211,4 @@ impl Domain1D {
         })
     }
 
-    fn check_cell_id(mesh: &Mesh1D, cell_id: &Vec<i32>) -> Result<(), Error1D> {
-        for &cid in cell_id.iter() {
-            if !mesh.cell_id.contains(&cid) {
-                return Err(Error1D::InvalidCellID {caller: "Domain1D".to_string(), cid, parent: "Mesh1D".to_string()});
-            }
-        }
-        Ok(())
-    }
 }

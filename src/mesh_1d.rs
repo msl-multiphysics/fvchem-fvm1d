@@ -30,8 +30,16 @@ pub struct Mesh1D {
 impl Mesh1D {
     pub fn new(x_min: f64, x_max: f64, num_cell: usize) -> Result<Mesh1D, Error1D> {
         // error checking
-        Self::check_bounds(x_min, x_max)?;
-        Self::check_num_cell(num_cell)?;
+        if x_max <= x_min {
+            return Err(Error1D::InvalidBoundsX {
+                caller: "Mesh1D".to_string(),
+                x_min: x_min,
+                x_max: x_max,
+            });
+        }
+        if num_cell < 1 {
+            return Err(Error1D::InvalidCellCount {caller: "Mesh1D".to_string()});
+        }
 
         // cell data
         let mut cell_id: Vec<i32> = Vec::new();
@@ -133,7 +141,9 @@ impl Mesh1D {
 
     pub fn new_from_face(face_x_vec: Vec<f64>) -> Result<Mesh1D, Error1D> {
         // error checking
-        Self::check_face_x(&face_x_vec)?;
+        if face_x_vec.len() < 2 {
+            return Err(Error1D::InvalidCellCount {caller: "Mesh1D".to_string()});
+        }
 
         // sort face positions
         let mut face_x_sort = face_x_vec.clone();
@@ -164,7 +174,9 @@ impl Mesh1D {
             cell_id.push(cid);
             cell_x.insert(cid, 0.5 * (face_x_sort[i] + face_x_sort[i + 1]));
             cell_dx.insert(cid, dx);
-            Self::check_cell_dx(dx)?;  // check cell size > 0
+            if dx <= 0.0 {
+                return Err(Error1D::InvalidCellSize {caller: "Mesh1D".to_string()});
+            }
         }
 
         // cell to cell data
@@ -265,38 +277,6 @@ impl Mesh1D {
             face_cell_id,
             face_cell_dist,
         })
-    }
-
-    fn check_bounds(x_min: f64, x_max: f64) -> Result<(), Error1D> {
-        if x_max <= x_min {
-            return Err(Error1D::InvalidBoundsX {
-                caller: "Mesh1D".to_string(),
-                x_min: x_min,
-                x_max: x_max,
-            });
-        }
-        Ok(())
-    }
-
-    fn check_num_cell(num_cell: usize) -> Result<(), Error1D> {
-        if num_cell < 1 {
-            return Err(Error1D::InvalidCellCount {caller: "Mesh1D".to_string()});
-        }
-        Ok(())
-    }
-    
-    fn check_face_x(face_x: &Vec<f64>) -> Result<(), Error1D> {
-        if face_x.len() < 2 {
-            return Err(Error1D::InvalidCellCount {caller: "Mesh1D".to_string()});
-        }
-        Ok(())
-    }
-
-    fn check_cell_dx(dx: f64) -> Result<(), Error1D> {
-        if dx <= 0.0 {
-            return Err(Error1D::InvalidCellSize {caller: "Mesh1D".to_string()});
-        }
-        Ok(())
     }
 
 }

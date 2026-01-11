@@ -54,7 +54,18 @@ pub trait TransientBase {
         println!("Starting transient solver.");
 
         // error checking
-        self.check_settings(dt, num_ts, max_iter, damping)?;
+        if dt <= 0.0 {
+            return Err(Error1D::InvalidTimeStep {caller: "Problem1D".to_string(), dt})
+        }
+        if num_ts < 1 {
+            return Err(Error1D::InvalidNumTimeSteps {caller: "Problem1D".to_string(), num_ts})
+        }
+        if max_iter < 2 {
+            return Err(Error1D::InvalidMaxIter {caller: "Problem1D".to_string(), max_iter})
+        }
+        if damping <= 0.0 || damping > 1.0 {
+            return Err(Error1D::InvalidDamping {caller: "Problem1D".to_string(), damping})
+        }
 
         // initialize time measurement
         let mut time_assemble = Duration::ZERO;
@@ -101,12 +112,12 @@ pub trait TransientBase {
                 let a_mat = SparseColMat::<usize, f64>::try_new_from_triplets(mat_size, mat_size, &a_triplet);
                 let a_mat = match a_mat {
                     Ok(mat) => mat,
-                    Err(_) => return Err(Error1D::FailedMatrixAssembly {caller: "SteadyBase".to_string()}),
+                    Err(_) => return Err(Error1D::FailedMatrixAssembly {caller: "TransientBase".to_string()}),
                 };
                 let lu = a_mat.sp_lu();
                 let lu = match lu {
                     Ok(decomp) => decomp,
-                    Err(_) => return Err(Error1D::FailedLUDecomposition {caller: "SteadyBase".to_string()}),
+                    Err(_) => return Err(Error1D::FailedLUDecomposition {caller: "TransientBase".to_string()}),
                 };
                 let x_undamp_vec = lu.solve(&b_vec); // undamped solution vector
                 let x_vec = (1.0 - damping) * &x_iter_vec + damping * x_undamp_vec; // damped solution vector
@@ -138,7 +149,9 @@ pub trait TransientBase {
             }
 
             // check convergence
-            self.check_convergence(iter, max_iter)?;
+            if iter >= max_iter {
+                return Err(Error1D::FailedConvergence {caller: "TransientBase".to_string(), max_iter})
+            }
 
             let time_2 = Instant::now();
 
@@ -269,29 +282,6 @@ pub trait TransientBase {
         for var in &prob.var1d {
             Variable1D::write_transient(&prob.dom1d[var.dom1d_id], var, ts);
         }
-    }
-
-    fn check_settings(&self, dt: f64, num_ts: usize, max_iter: usize, damping: f64) -> Result<(), Error1D> {
-        if dt <= 0.0 {
-            return Err(Error1D::InvalidTimeStep {caller: "Problem1D".to_string(), dt})
-        }
-        if num_ts < 1 {
-            return Err(Error1D::InvalidNumTimeSteps {caller: "Problem1D".to_string(), num_ts})
-        }
-        if max_iter < 2 {
-            return Err(Error1D::InvalidMaxIter {caller: "Problem1D".to_string(), max_iter})
-        }
-        if damping <= 0.0 || damping > 1.0 {
-            return Err(Error1D::InvalidDamping {caller: "Problem1D".to_string(), damping})
-        }
-        Ok(())
-    }
-
-    fn check_convergence(&self, iter: usize, max_iter: usize) -> Result<(), Error1D> {
-        if iter >= max_iter {
-            return Err(Error1D::FailedConvergence {caller: "SteadyBase".to_string(), max_iter})
-        }
-        Ok(())
     }
 
 }

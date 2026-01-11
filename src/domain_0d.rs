@@ -18,9 +18,13 @@ pub struct Domain0D {
 impl Domain0D {
     pub fn new(dom0d_id: usize, dom1d: &Domain1D, cell_id: i32, loc: usize) -> Result<Domain0D, Error1D> {
         // error checking
-        Self::check_cell_id(&dom1d, cell_id)?;
-        Self::check_loc(loc)?;
-        
+        if !dom1d.cell_id.contains(&cell_id) {
+            return Err(Error1D::InvalidCellID {caller: "Domain0D".to_string(), cid: cell_id, parent: "Domain1D".to_string()});
+        }
+        if loc > 1 {
+            return Err(Error1D::InvalidLocalID {caller: "Domain0D".to_string(), loc});
+        }
+
         // get struct ids
         let dom1d_id = dom1d.dom1d_id;
 
@@ -39,17 +43,4 @@ impl Domain0D {
         })
     }
 
-    fn check_cell_id(dom1d: &Domain1D, cell_id: i32) -> Result<(), Error1D> {
-        if !dom1d.cell_id.contains(&cell_id) {
-            return Err(Error1D::InvalidCellID {caller: "Domain0D".to_string(), cid: cell_id, parent: "Domain1D".to_string()});
-        }
-        Ok(())
-    }
-
-    fn check_loc(loc: usize) -> Result<(), Error1D> {
-        if loc > 1 {
-            return Err(Error1D::InvalidLocalID {caller: "Domain0D".to_string(), loc});
-        }
-        Ok(())
-    }
 }

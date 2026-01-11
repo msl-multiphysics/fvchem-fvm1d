@@ -45,7 +45,12 @@ pub trait SteadyBase {
         println!("Starting steady-state solver.");
 
         // error checking
-        self.check_settings(max_iter, damping)?;
+        if max_iter < 2 {
+            return Err(Error1D::InvalidMaxIter {caller: "Problem1D".to_string(), max_iter})
+        }
+        if damping <= 0.0 || damping > 1.0 {
+            return Err(Error1D::InvalidDamping {caller: "Problem1D".to_string(), damping})
+        }
 
         // initialize time measurement
         let mut time_assemble = Duration::ZERO;
@@ -119,7 +124,9 @@ pub trait SteadyBase {
         }
 
         // check convergence
-        self.check_convergence(iter, max_iter)?;
+        if iter >= max_iter {
+            return Err(Error1D::FailedConvergence {caller: "SteadyBase".to_string(), max_iter})
+        }
 
         let time_0 = Instant::now();
 
@@ -231,23 +238,6 @@ pub trait SteadyBase {
         for var in &prob.var1d {
             Variable1D::write_steady(&prob.dom1d[var.dom1d_id], var);
         }
-    }
-
-    fn check_settings(&self, max_iter: usize, damping: f64) -> Result<(), Error1D> {
-        if max_iter < 2 {
-            return Err(Error1D::InvalidMaxIter {caller: "Problem1D".to_string(), max_iter})
-        }
-        if damping <= 0.0 || damping > 1.0 {
-            return Err(Error1D::InvalidDamping {caller: "Problem1D".to_string(), damping})
-        }
-        Ok(())
-    }
-
-    fn check_convergence(&self, iter: usize, max_iter: usize) -> Result<(), Error1D> {
-        if iter >= max_iter {
-            return Err(Error1D::FailedConvergence {caller: "SteadyBase".to_string(), max_iter})
-        }
-        Ok(())
     }
 
 }
