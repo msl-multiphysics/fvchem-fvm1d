@@ -32,80 +32,21 @@ pub struct Domain1D {
 }
 
 impl Domain1D {
-    pub fn new(dom1d_id: usize, mesh: &Mesh1D) -> Result<Domain1D, Error1D> {
+    pub fn new(dom1d_id: usize, mesh: &Mesh1D, reg_id: usize) -> Result<Domain1D, Error1D> {        
         // cell data
-        let num_cell = mesh.num_cell;
-        let mut cell_id = mesh.cell_id.clone();
-        let cell_x = mesh.cell_x.clone();
-        let cell_dx = mesh.cell_dx.clone();
-
-        // sort cell_id so that cell_x is increasing
-        cell_id.sort_by(|a, b| cell_x[a].partial_cmp(&cell_x[b]).unwrap());
-
-        // face data
-        let num_face = mesh.num_face;
-        let mut face_id = mesh.face_id.clone();
-        let face_x = mesh.face_x.clone();
-
-        // sort face_id so that face_x is increasing
-        face_id.sort_by(|a, b| face_x[a].partial_cmp(&face_x[b]).unwrap());
-
-        // cell to cell data
-        let cell_cell_id = mesh.cell_cell_id.clone();
-        let cell_cell_dist = mesh.cell_cell_dist.clone();
-
-        // cell to face data
-        let cell_face_id = mesh.cell_face_id.clone();
-        let cell_face_dist = mesh.cell_face_dist.clone();
-        let cell_face_norm = mesh.cell_face_norm.clone();
-
-        // face to cell data
-        let face_cell_id = mesh.face_cell_id.clone();
-        let face_cell_dist = mesh.face_cell_dist.clone();
-
-        // return
-       Ok(Domain1D {
-            dom1d_id,
-            num_cell,
-            cell_id,
-            cell_x,
-            cell_dx,
-            num_face,
-            face_id,
-            face_x,
-            cell_cell_id,
-            cell_cell_dist,
-            cell_face_id,
-            cell_face_dist,
-            cell_face_norm,
-            face_cell_id,
-            face_cell_dist,
-        })
-    }
-
-    pub fn new_from_subset(dom1d_id: usize, mesh: &Mesh1D, mut cell_id: Vec<i32>) -> Result<Domain1D, Error1D> {
-        // error checking
-        for &cid in cell_id.iter() {
-            if !mesh.cell_id.contains(&cid) {
-                return Err(Error1D::InvalidCellID {caller: "Domain1D".to_string(), cid, parent: "Mesh1D".to_string()});
-            }
-        }
-        
-        // cell data
-        let num_cell = cell_id.len();
+        let mut cell_id = mesh.reg_cell_id[&reg_id].clone();
         let mut cell_x: HashMap<i32, f64> = HashMap::new();
         let mut cell_dx: HashMap<i32, f64> = HashMap::new();
 
         // compute cell data
+        let num_cell = cell_id.len();
         for &cid in cell_id.iter() {
             cell_x.insert(cid, mesh.cell_x[&cid]);
             cell_dx.insert(cid, mesh.cell_dx[&cid]);
         }
-
-        // sort cell_id so that cell_x is increasing
         cell_id.sort_by(|a, b| cell_x[a].partial_cmp(&cell_x[b]).unwrap());
-
-        // compute face data
+        
+        // face data
         let mut face_id_set: HashSet<i32> = HashSet::new();
         for &cid in cell_id.iter() {
             for loc in 0..2 {
@@ -119,8 +60,6 @@ impl Domain1D {
         for &fid in face_id.iter() {
             face_x.insert(fid, mesh.face_x[&fid]);
         }
-
-        // sort face_id so that face_x is increasing
         face_id.sort_by(|a, b| face_x[a].partial_cmp(&face_x[b]).unwrap());
 
         // cell to cell data

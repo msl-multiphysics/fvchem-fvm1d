@@ -99,8 +99,8 @@ pub fn read_csv(file_path: String, caller: String, header: Vec<String>, is_i32: 
             num_f64 += 1;
         }
     }
-    let mut data_i32: Vec<Vec<i32>> = Vec::with_capacity(num_i32);
-    let mut data_f64: Vec<Vec<f64>> = Vec::with_capacity(num_f64);
+    let mut data_i32: Vec<Vec<i32>> = vec![Vec::new(); num_i32];
+    let mut data_f64: Vec<Vec<f64>> = vec![Vec::new(); num_f64];
 
     // iterate through lines
     for line in lines {

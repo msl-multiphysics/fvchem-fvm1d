@@ -18,6 +18,13 @@ pub enum Error1D {
         parent: String,
     },
 
+    #[error("{caller}: Face ID {fid} is not on the boundary of {parent}.")]
+    InvalidBoundaryFaceID {
+        caller: String,
+        fid: i32,
+        parent: String,
+    },
+
     #[error("{caller}: Local ID {loc} not found in cell.")]
     InvalidLocalID {
         caller: String,

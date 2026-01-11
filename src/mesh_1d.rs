@@ -28,16 +28,16 @@ pub struct Mesh1D {
     pub face_cell_id: HashMap<i32, (i32, i32)>,
     pub face_cell_dist: HashMap<i32, (f64, f64)>,
 
-    // group cell data
-    pub num_group_cell: usize,
-    pub group_cell: Vec<usize>,
-    pub group_cell_id: HashMap<usize, Vec<i32>>,
+    // region data
+    pub num_reg: usize,
+    pub reg_id: Vec<usize>,
+    pub reg_cell_id: HashMap<usize, Vec<i32>>,
 
-    // group face data
-    pub num_group_face: usize,
-    pub group_face: Vec<usize>,
-    pub group_face_id: HashMap<usize, Vec<i32>>,
-
+    // boundary data
+    pub num_bnd: usize,
+    pub bnd_id: Vec<usize>,
+    pub bnd_cell_id: HashMap<usize, i32>,
+    pub bnd_loc: HashMap<usize, usize>,
 }
 
 impl Mesh1D {
@@ -133,18 +133,16 @@ impl Mesh1D {
         );
         face_cell_dist.insert(-(num_face as i32), (0.5 * dx, 0.0));
 
-        // group cell data
-        let num_group_cell = 1;
-        let group_cell: Vec<usize> = vec![0];
-        let group_cell_id: HashMap<usize, Vec<i32>> = HashMap::from([(0, cell_id.clone())]);
+        // region data
+        let num_reg = 1;
+        let reg_id: Vec<usize> = vec![0];
+        let reg_cell_id: HashMap<usize, Vec<i32>> = HashMap::from([(0, cell_id.clone())]);
 
-        // group face data
-        let num_group_face = 2;
-        let group_face: Vec<usize> = vec![0, 1];
-        let group_face_id: HashMap<usize, Vec<i32>> = HashMap::from([
-            (0, vec![-1]),
-            (1, vec![-(num_face as i32)]),
-        ]);
+        // boundary data
+        let num_bnd = 2;
+        let bnd_id: Vec<usize> = vec![0, 1];
+        let bnd_cell_id: HashMap<usize, i32> = HashMap::from([(0, 0), (1, (num_cell as i32 - 1))]);
+        let bnd_loc: HashMap<usize, usize> = HashMap::from([(0, 0), (1, 1)]);
 
         // return
         Ok(Mesh1D {
@@ -162,12 +160,13 @@ impl Mesh1D {
             cell_face_norm,
             face_cell_id,
             face_cell_dist,
-            num_group_cell,
-            group_cell,
-            group_cell_id,
-            num_group_face,
-            group_face,
-            group_face_id,
+            num_reg,
+            reg_id,
+            reg_cell_id,
+            num_bnd,
+            bnd_id,
+            bnd_cell_id,
+            bnd_loc,
         })
     }
 
@@ -271,41 +270,44 @@ impl Mesh1D {
             face_cell_dist.insert(fid, (face_cell_f64[0][i], face_cell_f64[1][i]));
         }
 
-        // group cell data
-        let (_, group_cell_i32, _) = read_csv(
-            mesh_file.clone() + "_group_cell.csv",
+        // region data
+        let (_, reg_i32, _) = read_csv(
+            mesh_file.clone() + "_reg.csv",
             "Mesh1D".to_string(),
-            vec!["gc".to_string(), "cid".to_string()],
+            vec!["rid".to_string(), "cid".to_string()],
             vec![true, true],
         )?;
-        let mut group_cell_set: HashSet<usize> = HashSet::new();
-        let mut group_cell_id: HashMap<usize, Vec<i32>> = HashMap::new();
-        for i in 0..group_cell_i32[0].len() {
-            let gc = group_cell_i32[0][i] as usize;
-            let cid = group_cell_i32[1][i];
-            group_cell_set.insert(gc);
-            group_cell_id.entry(gc).or_insert(Vec::new()).push(cid);
+        let mut reg_set: HashSet<usize> = HashSet::new();
+        let mut reg_cell_id: HashMap<usize, Vec<i32>> = HashMap::new();
+        for i in 0..reg_i32[0].len() {
+            let rid = reg_i32[0][i] as usize;
+            let cid = reg_i32[1][i];
+            reg_set.insert(rid);
+            reg_cell_id.entry(rid).or_insert(Vec::new()).push(cid);
         }
-        let group_cell: Vec<usize> = group_cell_set.into_iter().collect();
-        let num_group_cell = group_cell.len();
+        let reg_id: Vec<usize> = reg_set.into_iter().collect();
+        let num_reg = reg_id.len();
 
-        // group face data
-        let (_, group_face_i32, _) = read_csv(
-            mesh_file.clone() + "_group_face.csv",
+        // boundary data
+        let (_, bnd_i32, _) = read_csv(
+            mesh_file.clone() + "_bnd.csv",
             "Mesh1D".to_string(),
-            vec!["gf".to_string(), "fid".to_string()],
-            vec![true, true],
+            vec!["bid".to_string(), "cid".to_string(), "loc".to_string()],
+            vec![true, true, true],
         )?;
-        let mut group_face_set: HashSet<usize> = HashSet::new();
-        let mut group_face_id: HashMap<usize, Vec<i32>> = HashMap::new();
-        for i in 0..group_face_i32[0].len() {
-            let gf = group_face_i32[0][i] as usize;
-            let fid = group_face_i32[1][i];
-            group_face_set.insert(gf);
-            group_face_id.entry(gf).or_insert(Vec::new()).push(fid);
+        let mut bnd_set: HashSet<usize> = HashSet::new();
+        let mut bnd_cell_id: HashMap<usize, i32> = HashMap::new();
+        let mut bnd_loc: HashMap<usize, usize> = HashMap::new();
+        for i in 0..bnd_i32[0].len() {
+            let bid = bnd_i32[0][i] as usize;
+            let cid = bnd_i32[1][i];
+            let loc = bnd_i32[2][i] as usize;
+            bnd_set.insert(bid);
+            bnd_cell_id.insert(bid, cid);
+            bnd_loc.insert(bid, loc);
         }
-        let group_face: Vec<usize> = group_face_set.into_iter().collect();
-        let num_group_face = group_face.len();
+        let bnd_id: Vec<usize> = bnd_set.iter().cloned().collect();
+        let num_bnd = bnd_id.len();
 
         // return
         Ok(Mesh1D {
@@ -323,12 +325,13 @@ impl Mesh1D {
             cell_face_norm,
             face_cell_id,
             face_cell_dist,
-            num_group_cell,
-            group_cell,
-            group_cell_id,
-            num_group_face,
-            group_face,
-            group_face_id,
+            num_reg,
+            reg_id,
+            reg_cell_id,
+            num_bnd,
+            bnd_id,
+            bnd_cell_id,
+            bnd_loc,
         })
     }
 
@@ -454,39 +457,43 @@ impl Mesh1D {
             vec![&dist_0_vec, &dist_1_vec],
         )?;
 
-        // write group cell data
-        let mut gc_vec: Vec<i32> = Vec::new();
+        // write region data
+        let mut rid_vec: Vec<i32> = Vec::new();
         let mut cid_vec: Vec<i32> = Vec::new();
-        for (&gc, cid_sub) in self.group_cell_id.iter() {
+        for (&rid, cid_sub) in self.reg_cell_id.iter() {
             for &cid in cid_sub.iter() {
-                gc_vec.push(gc as i32);
+                rid_vec.push(rid as i32);
                 cid_vec.push(cid);
             }
         }
         write_csv(
-            write_file.clone() + "_group_cell.csv",
+            write_file.clone() + "_reg.csv",
             "Mesh1D".to_string(),
-            vec!["gc".to_string(), "cid".to_string()],
+            vec!["rid".to_string(), "cid".to_string()],
             vec![true, true],
-            vec![&gc_vec, &cid_vec],
+            vec![&rid_vec, &cid_vec],
             vec![],
         )?;
 
-        // write group face data
-        let mut gf_vec: Vec<i32> = Vec::new();
-        let mut fid_vec: Vec<i32> = Vec::new();
-        for (&gf, fid_sub) in self.group_face_id.iter() {
-            for &fid in fid_sub.iter() {
-                gf_vec.push(gf as i32);
-                fid_vec.push(fid);
-            }
+        // write boundary data
+        let mut bid_vec: Vec<i32> = Vec::new();
+        let mut cid_vec: Vec<i32> = Vec::new();
+        let mut loc_vec: Vec<i32> = Vec::new();
+        for &bid in self.bnd_id.iter() {
+            bid_vec.push(bid as i32);
+            cid_vec.push(self.bnd_cell_id[&bid]);
+            loc_vec.push(self.bnd_loc[&bid] as i32);
         }
         write_csv(
-            write_file.clone() + "_group_face.csv",
+            write_file.clone() + "_bnd.csv",
             "Mesh1D".to_string(),
-            vec!["gf".to_string(), "fid".to_string()],
-            vec![true, true],
-            vec![&gf_vec, &fid_vec],
+            vec![
+                "bid".to_string(),
+                "cid".to_string(),
+                "loc".to_string(),
+            ],
+            vec![true, true, true],
+            vec![&bid_vec, &cid_vec, &loc_vec],
             vec![],
         )?;
 

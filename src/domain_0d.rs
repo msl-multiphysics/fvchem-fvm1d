@@ -1,4 +1,5 @@
 use crate::domain_1d::Domain1D;
+use crate::mesh_1d::Mesh1D;
 use crate::utils_error::Error1D;
 
 pub struct Domain0D {
@@ -16,19 +17,15 @@ pub struct Domain0D {
 }
 
 impl Domain0D {
-    pub fn new(dom0d_id: usize, dom1d: &Domain1D, cell_id: i32, loc: usize) -> Result<Domain0D, Error1D> {
-        // error checking
-        if !dom1d.cell_id.contains(&cell_id) {
-            return Err(Error1D::InvalidCellID {caller: "Domain0D".to_string(), cid: cell_id, parent: "Domain1D".to_string()});
-        }
-        if loc > 1 {
-            return Err(Error1D::InvalidLocalID {caller: "Domain0D".to_string(), loc});
-        }
-
+    pub fn new(dom0d_id: usize, mesh: &Mesh1D, dom1d: &Domain1D, bnd_id: usize) -> Result<Domain0D, Error1D> {
         // get struct ids
         let dom1d_id = dom1d.dom1d_id;
 
+        // get cell data
+        let cell_id = mesh.bnd_cell_id[&bnd_id];
+
         // get face data
+        let loc = mesh.bnd_loc[&bnd_id];
         let face_id = dom1d.cell_face_id[&cell_id][loc];
         let face_x = dom1d.face_x[&face_id];
 

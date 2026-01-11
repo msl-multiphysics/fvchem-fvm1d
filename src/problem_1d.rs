@@ -25,37 +25,25 @@ impl Problem1D {
         }
     }
 
-    pub fn add_dom0d(&mut self, dom1d_id: usize, cell_id: i32, loc: usize) -> Result<usize, Error1D> {
+    pub fn add_dom0d(&mut self, mesh: &Mesh1D, dom1d_id: usize, bnd_id: usize) -> Result<usize, Error1D> {
         // get dom0d_id
         let dom0d_id = self.dom0d.len();
 
         // create Domain0D
         let dom1d = &self.dom1d[dom1d_id];
-        let dom0d = Domain0D::new(dom0d_id, dom1d, cell_id, loc)?;
+        let dom0d = Domain0D::new(dom0d_id, mesh, dom1d, bnd_id)?;
         self.dom0d.push(dom0d);
 
         // return
         Ok(dom0d_id)
     }
 
-    pub fn add_dom1d(&mut self, mesh: &Mesh1D) -> Result<usize, Error1D> {
+    pub fn add_dom1d(&mut self, mesh: &Mesh1D, reg_id: usize) -> Result<usize, Error1D> {
         // get dom1d_id
         let dom1d_id = self.dom1d.len();
 
         // create Domain1D
-        let dom1d = Domain1D::new(dom1d_id, mesh)?;
-        self.dom1d.push(dom1d);
-
-        // return
-        Ok(dom1d_id)
-    }
-
-    pub fn add_dom1d_from_subset(&mut self, mesh: &Mesh1D, cell_id: Vec<i32>) -> Result<usize, Error1D> {
-        // get dom1d_id
-        let dom1d_id = self.dom1d.len();
-
-        // create Domain1D
-        let dom1d = Domain1D::new_from_subset(dom1d_id, mesh, cell_id)?;
+        let dom1d = Domain1D::new(dom1d_id, mesh, reg_id)?;
         self.dom1d.push(dom1d);
 
         // return
