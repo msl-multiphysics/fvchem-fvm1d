@@ -31,8 +31,6 @@ impl Variable1D {
         var1d_id: usize,
         dom1d: &Domain1D,
         value_init: f64,
-        output_file: String,
-        output_step: usize,
     ) -> Result<Variable1D, Error1D> {
         // get struct ids
         let dom1d_id = dom1d.dom1d_id;
@@ -61,7 +59,9 @@ impl Variable1D {
         }
 
         // output file data
-        let is_output = !output_file.is_empty() || output_step > 0;
+        let is_output = false;
+        let output_step = 0;
+        let output_file = String::new();
 
         // return
         Ok(Variable1D {
@@ -76,6 +76,18 @@ impl Variable1D {
             output_step,
             output_file,
         })
+    }
+
+    pub fn set_output_steady(var: &mut Variable1D, output_file: String) {
+        var.is_output = true;
+        var.output_file = output_file;
+        var.output_step = 0;
+    }
+
+    pub fn set_output_transient(var: &mut Variable1D, output_file: String, output_step: usize) {
+        var.is_output = true;
+        var.output_file = output_file;
+        var.output_step = output_step;
     }
 
     pub fn update_prev(var: &mut Variable1D) {

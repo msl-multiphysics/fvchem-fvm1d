@@ -25,191 +25,198 @@ impl Problem1D {
         }
     }
 
-    pub fn add_dom0d(prob: &mut Problem1D, dom1d_id: usize, cell_id: i32, loc: usize) -> Result<usize, Error1D> {
+    pub fn add_dom0d(&mut self, dom1d_id: usize, cell_id: i32, loc: usize) -> Result<usize, Error1D> {
         // get dom0d_id
-        let dom0d_id = prob.dom0d.len();
+        let dom0d_id = self.dom0d.len();
 
         // create Domain0D
-        let dom1d = &prob.dom1d[dom1d_id];
+        let dom1d = &self.dom1d[dom1d_id];
         let dom0d = Domain0D::new(dom0d_id, dom1d, cell_id, loc)?;
-        prob.dom0d.push(dom0d);
+        self.dom0d.push(dom0d);
 
         // return
         Ok(dom0d_id)
     }
 
-    pub fn add_dom1d(prob: &mut Problem1D, mesh: &Mesh1D) -> Result<usize, Error1D> {
+    pub fn add_dom1d(&mut self, mesh: &Mesh1D) -> Result<usize, Error1D> {
         // get dom1d_id
-        let dom1d_id = prob.dom1d.len();
+        let dom1d_id = self.dom1d.len();
 
         // create Domain1D
         let dom1d = Domain1D::new(dom1d_id, mesh)?;
-        prob.dom1d.push(dom1d);
+        self.dom1d.push(dom1d);
 
         // return
         Ok(dom1d_id)
     }
 
-    pub fn add_dom1d_from_subset(prob: &mut Problem1D, mesh: &Mesh1D, cell_id: Vec<i32>) -> Result<usize, Error1D> {
+    pub fn add_dom1d_from_subset(&mut self, mesh: &Mesh1D, cell_id: Vec<i32>) -> Result<usize, Error1D> {
         // get dom1d_id
-        let dom1d_id = prob.dom1d.len();
+        let dom1d_id = self.dom1d.len();
 
         // create Domain1D
         let dom1d = Domain1D::new_from_subset(dom1d_id, mesh, cell_id)?;
-        prob.dom1d.push(dom1d);
+        self.dom1d.push(dom1d);
 
         // return
         Ok(dom1d_id)
     }
 
     pub fn add_scl0d(
-        prob: &mut Problem1D,
+        &mut self,
         dom0d_id: usize,
-        value: f64,
-        output_file: String,
-        output_step: usize,
+        value: f64
     ) -> Result<usize, Error1D> {
         // get scl0d_id
-        let scl0d_id = prob.scl0d.len();
+        let scl0d_id = self.scl0d.len();
 
         // create Scalar0D
-        let dom0d = &prob.dom0d[dom0d_id];
-        let scl0d = Scalar0D::new(scl0d_id, dom0d, value, output_file, output_step)?;
-        prob.scl0d.push(scl0d);
+        let dom0d = &self.dom0d[dom0d_id];
+        let scl0d = Scalar0D::new(scl0d_id, dom0d, value)?;
+        self.scl0d.push(scl0d);
 
         // return
         Ok(scl0d_id)
     }
 
     pub fn add_scl0d_from_function(
-        prob: &mut Problem1D,
+        &mut self,
         dom0d_id: usize,
         value_func: fn(usize, f64, Vec<f64>) -> f64,
         value_var: Vec<usize>,
-        output_file: String,
-        output_step: usize,
     ) -> Result<usize, Error1D> {
         // get scl0d_id
-        let scl0d_id = prob.scl0d.len();
+        let scl0d_id = self.scl0d.len();
 
         // create Scalar0D
-        let dom0d = &prob.dom0d[dom0d_id];
+        let dom0d = &self.dom0d[dom0d_id];
         let scl0d = Scalar0D::new_from_function(
             scl0d_id,
             dom0d,
-            &prob.var1d,
+            &self.var1d,
             value_func,
             value_var,
-            output_file,
-            output_step,
         )?;
-        prob.scl0d.push(scl0d);
+        self.scl0d.push(scl0d);
 
         // return
         Ok(scl0d_id)
     }
 
     pub fn add_scl0d_from_file(
-        prob: &mut Problem1D,
+        &mut self,
         dom0d_id: usize,
         value_file: String,
-        output_file: String,
-        output_step: usize,
     ) -> Result<usize, Error1D> {
         // get scl0d_id
-        let scl0d_id = prob.scl0d.len();
+        let scl0d_id = self.scl0d.len();
 
         // create Scalar0D
-        let dom0d = &prob.dom0d[dom0d_id];
-        let scl0d = Scalar0D::new_from_file(scl0d_id, dom0d, value_file, output_file, output_step)?;
-        prob.scl0d.push(scl0d);
+        let dom0d = &self.dom0d[dom0d_id];
+        let scl0d = Scalar0D::new_from_file(scl0d_id, dom0d, value_file)?;
+        self.scl0d.push(scl0d);
 
         // return
         Ok(scl0d_id)
     }
 
     pub fn add_scl1d(
-        prob: &mut Problem1D,
+        &mut self,
         dom1d_id: usize,
         value: f64,
-        output_file: String,
-        output_step: usize,
     ) -> Result<usize, Error1D> {
         // get scl1d_id
-        let scl1d_id = prob.scl1d.len();
+        let scl1d_id = self.scl1d.len();
 
         // create Scalar1D
-        let dom1d = &prob.dom1d[dom1d_id];
-        let scl1d = Scalar1D::new(scl1d_id, dom1d, value, output_file, output_step)?;
-        prob.scl1d.push(scl1d);
+        let dom1d = &self.dom1d[dom1d_id];
+        let scl1d = Scalar1D::new(scl1d_id, dom1d, value)?;
+        self.scl1d.push(scl1d);
 
         // return
         Ok(scl1d_id)
     }
 
     pub fn add_scl1d_from_function(
-        prob: &mut Problem1D,
+        &mut self,
         dom1d_id: usize,
         value_func: fn(usize, f64, Vec<f64>) -> f64,
         value_var: Vec<usize>,
-        output_file: String,
-        output_step: usize,
     ) -> Result<usize, Error1D> {
         // get scl1d_id
-        let scl1d_id = prob.scl1d.len();
+        let scl1d_id = self.scl1d.len();
 
         // create Scalar1D
-        let dom1d = &prob.dom1d[dom1d_id];
+        let dom1d = &self.dom1d[dom1d_id];
         let scl1d = Scalar1D::new_from_function(
             scl1d_id,
             dom1d,
-            &prob.var1d,
+            &self.var1d,
             value_func,
             value_var,
-            output_file,
-            output_step,
         )?;
-        prob.scl1d.push(scl1d);
-
+        self.scl1d.push(scl1d);
+        
         // return
         Ok(scl1d_id)
     }
 
     pub fn add_scl1d_from_file(
-        prob: &mut Problem1D,
+        &mut self,
         dom1d_id: usize,
         value_file: String,
-        output_file: String,
-        output_step: usize,
     ) -> Result<usize, Error1D> {
         // get scl1d_id
-        let scl1d_id = prob.scl1d.len();
-
+        let scl1d_id = self.scl1d.len();
+        
         // create Scalar1D
-        let dom1d = &prob.dom1d[dom1d_id];
-        let scl1d = Scalar1D::new_from_file(scl1d_id, dom1d, value_file, output_file, output_step)?;
-        prob.scl1d.push(scl1d);
+        let dom1d = &self.dom1d[dom1d_id];
+        let scl1d = Scalar1D::new_from_file(scl1d_id, dom1d, value_file)?;
+        self.scl1d.push(scl1d);
 
         // return
         Ok(scl1d_id)
     }
 
     pub fn add_var1d(
-        prob: &mut Problem1D,
+        &mut self,
         dom1d_id: usize,
         value_init: f64,
-        output_file: String,
-        output_step: usize,
     ) -> Result<usize, Error1D> {
         // get var1d_id
-        let var1d_id = prob.var1d.len();
+        let var1d_id = self.var1d.len();
 
         // create Variable1D
-        let dom1d = &prob.dom1d[dom1d_id];
-        let var1d = Variable1D::new(var1d_id, dom1d, value_init, output_file, output_step)?;
-        prob.var1d.push(var1d);
+        let dom1d = &self.dom1d[dom1d_id];
+        let var1d = Variable1D::new(var1d_id, dom1d, value_init)?;
+        self.var1d.push(var1d);
 
         // return
         Ok(var1d_id)
     }
+
+    pub fn set_scl0d_output_steady(&mut self, scl0d_id: usize, output_file: String) {
+        Scalar0D::set_output_steady(&mut self.scl0d[scl0d_id], output_file);
+    }
+
+    pub fn set_scl0d_output_transient(&mut self, scl0d_id: usize, output_file: String, output_step: usize) {
+        Scalar0D::set_output_transient(&mut self.scl0d[scl0d_id], output_file, output_step);
+    }
+
+    pub fn set_scl1d_output_steady(&mut self, scl1d_id: usize, output_file: String) {
+        Scalar1D::set_output_steady(&mut self.scl1d[scl1d_id], output_file);
+    }
+
+    pub fn set_scl1d_output_transient(&mut self, scl1d_id: usize, output_file: String, output_step: usize) {
+        Scalar1D::set_output_transient(&mut self.scl1d[scl1d_id], output_file, output_step);
+    }
+
+    pub fn set_var1d_output_steady(&mut self, var1d_id: usize, output_file: String) {
+        Variable1D::set_output_steady(&mut self.var1d[var1d_id], output_file);
+    }
+
+    pub fn set_var1d_output_transient(&mut self, var1d_id: usize, output_file: String, output_step: usize) {
+        Variable1D::set_output_transient(&mut self.var1d[var1d_id], output_file, output_step);
+    }
+
 }

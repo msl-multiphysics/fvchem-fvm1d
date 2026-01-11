@@ -29,8 +29,6 @@ impl Scalar0D {
         scl0d_id: usize,
         dom0d: &Domain0D,
         value: f64,
-        output_file: String,
-        output_step: usize,
     ) -> Result<Scalar0D, Error1D> {
         // get struct ids
         let dom0d_id = dom0d.dom0d_id;
@@ -40,7 +38,9 @@ impl Scalar0D {
         let face_value_prev = value;
 
         // output file data
-        let is_output = !output_file.is_empty() || output_step > 0;
+        let is_output = false;
+        let output_step = 0;
+        let output_file = String::new();
 
         // set input to constant
         let is_constant = true;
@@ -68,8 +68,6 @@ impl Scalar0D {
         var1d_all: &Vec<Variable1D>,
         value_func: fn(usize, f64, Vec<f64>) -> f64,
         value_var: Vec<usize>,
-        output_file: String,
-        output_step: usize,
     ) -> Result<Scalar0D, Error1D> {
         // get struct ids
         let dom0d_id = dom0d.dom0d_id;
@@ -86,7 +84,9 @@ impl Scalar0D {
         let face_value_prev = face_value;
 
         // output file data
-        let is_output = !output_file.is_empty() || output_step > 0;
+        let is_output = false;
+        let output_step = 0;
+        let output_file = String::new();
 
         // set input to non-constant
         let is_constant = false;
@@ -110,8 +110,6 @@ impl Scalar0D {
         scl0d_id: usize,
         dom0d: &Domain0D,
         value_file: String,
-        output_file: String,
-        output_step: usize,
     ) -> Result<Scalar0D, Error1D> {
         // get struct ids
         let dom0d_id = dom0d.dom0d_id;
@@ -140,7 +138,9 @@ impl Scalar0D {
         let face_value_prev = face_value;
 
         // output file data
-        let is_output = !output_file.is_empty() || output_step > 0;
+        let is_output = false;
+        let output_step = 0;
+        let output_file = String::new();
 
         // set input to constant
         let is_constant = true;
@@ -160,6 +160,18 @@ impl Scalar0D {
             value_func,
             value_var,
         })
+    }
+
+    pub fn set_output_steady(scl: &mut Scalar0D, output_file: String) {
+        scl.is_output = true;
+        scl.output_file = output_file;
+        scl.output_step = 0;
+    }
+
+    pub fn set_output_transient(scl: &mut Scalar0D, output_file: String, output_step: usize) {
+        scl.is_output = true;
+        scl.output_file = output_file;
+        scl.output_step = output_step;
     }
 
     pub fn update_iter(dom: &Domain0D, scl: &mut Scalar0D, var_all: &Vec<Variable1D>, ts: usize) {
