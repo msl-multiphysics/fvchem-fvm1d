@@ -1,4 +1,4 @@
-use crate::limiter_1d::{LimiterType, calc_limiter};
+use crate::utils_limiter::{LimiterType, calc_limiter};
 use crate::problem_1d::Problem1D;
 use crate::transient_base::TransientBase;
 use faer::prelude::Col;

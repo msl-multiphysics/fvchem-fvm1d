@@ -1,7 +1,7 @@
-use crate::error_1d::Error1D;
+use crate::utils_csv::{read_csv, write_csv};
+use crate::utils_error::Error1D;
 use std::collections::{HashMap, HashSet};
-use std::fs::File;
-use std::io::{BufRead, BufReader, Write};
+use std::vec;
 
 pub struct Mesh1D {
     // cell data
@@ -173,168 +173,134 @@ impl Mesh1D {
 
     pub fn new_from_file(mesh_file: String) -> Result<Mesh1D, Error1D> {
         // read cell data
-        let cell_file = File::open(mesh_file.clone() + "_cell.csv")
-            .map_err(|_| Error1D::FileReadError {
-                caller: "Mesh1D".to_string(),
-                file_path: mesh_file.clone() + "_cell.csv",
-            })?;
-        let cell_reader = BufReader::new(cell_file);
+        let (num_cell, cell_i32, cell_f64) = read_csv(
+            mesh_file.clone() + "_cell.csv",
+            "Mesh1D".to_string(),
+            vec!["cid".to_string(), "x".to_string(), "dx".to_string()],
+            vec![true, false, false],
+        )?;
         let mut cell_id: Vec<i32> = Vec::new();
         let mut cell_x: HashMap<i32, f64> = HashMap::new();
         let mut cell_dx: HashMap<i32, f64> = HashMap::new();
-        for (i, line) in cell_reader.lines().enumerate() {
-            if i == 0 {
-                continue;  // skip header
-            }
-            let line = line.unwrap();
-            let parts: Vec<&str> = line.trim().split(',').collect();
-            let cid: i32 = parts[0].parse().unwrap();
-            let x: f64 = parts[1].parse().unwrap();
-            let dx: f64 = parts[2].parse().unwrap();
+        for i in 0..num_cell {
+            let cid = cell_i32[0][i];
             cell_id.push(cid);
-            cell_x.insert(cid, x);
-            cell_dx.insert(cid, dx);
+            cell_x.insert(cid, cell_f64[0][i]);
+            cell_dx.insert(cid, cell_f64[1][i]);
         }
-        let num_cell = cell_id.len();
 
         // read face data
-        let face_file = File::open(mesh_file.clone() + "_face.csv")
-            .map_err(|_| Error1D::FileReadError {
-                caller: "Mesh1D".to_string(),
-                file_path: mesh_file.clone() + "_face.csv",
-            })?;
-        let face_reader = BufReader::new(face_file);
+        let (num_face, face_i32, face_f64) = read_csv(
+            mesh_file.clone() + "_face.csv",
+            "Mesh1D".to_string(),
+            vec!["fid".to_string(), "x".to_string()],
+            vec![true, false],
+        )?;
         let mut face_id: Vec<i32> = Vec::new();
         let mut face_x: HashMap<i32, f64> = HashMap::new();
-        for (i, line) in face_reader.lines().enumerate() {
-            if i == 0 {
-                continue;  // skip header
-            }
-            let line = line.unwrap();
-            let parts: Vec<&str> = line.trim().split(',').collect();
-            let fid: i32 = parts[0].parse().unwrap();
-            let x: f64 = parts[1].parse().unwrap();
+        for i in 0..num_face {
+            let fid = face_i32[0][i];
             face_id.push(fid);
-            face_x.insert(fid, x);
+            face_x.insert(fid, face_f64[0][i]);
         }
-        let num_face = face_id.len();
 
         // read cell to cell data
-        let cell_cell_file = File::open(mesh_file.clone() + "_cell_cell.csv")
-            .map_err(|_| Error1D::FileReadError {
-                caller: "Mesh1D".to_string(),
-                file_path: mesh_file.clone() + "_cell_cell.csv",
-            })?;
-        let cell_cell_reader = BufReader::new(cell_cell_file);
+        let (_, cell_cell_i32, cell_cell_f64) = read_csv(
+            mesh_file.clone() + "_cell_cell.csv",
+            "Mesh1D".to_string(),
+            vec![
+                "cid".to_string(),
+                "nid_0".to_string(),
+                "nid_1".to_string(),
+                "dist_0".to_string(),
+                "dist_1".to_string(),
+            ],
+            vec![true, true, true, false, false],
+        )?;
         let mut cell_cell_id: HashMap<i32, Vec<i32>> = HashMap::new();
         let mut cell_cell_dist: HashMap<i32, Vec<f64>> = HashMap::new();
-        for (i, line) in cell_cell_reader.lines().enumerate() {
-            if i == 0 {
-                continue;  // skip header
-            }
-            let line = line.unwrap();
-            let parts: Vec<&str> = line.trim().split(',').collect();
-            let cid: i32 = parts[0].parse().unwrap();
-            let nid_0: i32 = parts[1].parse().unwrap();
-            let nid_1: i32 = parts[2].parse().unwrap();
-            let dist_0: f64 = parts[3].parse().unwrap();
-            let dist_1: f64 = parts[4].parse().unwrap();
-            cell_cell_id.insert(cid, vec![nid_0, nid_1]);
-            cell_cell_dist.insert(cid, vec![dist_0, dist_1]);
+        for i in 0..num_cell {
+            let cid = cell_cell_i32[0][i];
+            cell_cell_id.insert(cid, vec![cell_cell_i32[1][i], cell_cell_i32[2][i]]);
+            cell_cell_dist.insert(cid, vec![cell_cell_f64[0][i], cell_cell_f64[1][i]]);
         }
 
         // read cell to face data
-        let cell_face_file = File::open(mesh_file.clone() + "_cell_face.csv")
-            .map_err(|_| Error1D::FileReadError {
-                caller: "Mesh1D".to_string(),
-                file_path: mesh_file.clone() + "_cell_face.csv",
-            })?;
-        let cell_face_reader = BufReader::new(cell_face_file);
+        let (_, cell_face_i32, cell_face_f64) = read_csv(
+            mesh_file.clone() + "_cell_face.csv",
+            "Mesh1D".to_string(),
+            vec![
+                "cid".to_string(),
+                "fid_0".to_string(),
+                "fid_1".to_string(),
+                "dist_0".to_string(),
+                "dist_1".to_string(),
+                "norm_0".to_string(),
+                "norm_1".to_string(),
+            ],
+            vec![true, true, true, false, false, false, false],
+        )?;
         let mut cell_face_id: HashMap<i32, Vec<i32>> = HashMap::new();
         let mut cell_face_dist: HashMap<i32, Vec<f64>> = HashMap::new();
         let mut cell_face_norm: HashMap<i32, Vec<f64>> = HashMap::new();
-        for (i, line) in cell_face_reader.lines().enumerate() {
-            if i == 0 {
-                continue;  // skip header
-            }
-            let line = line.unwrap();
-            let parts: Vec<&str> = line.trim().split(',').collect();
-            let cid: i32 = parts[0].parse().unwrap();
-            let fid_0: i32 = parts[1].parse().unwrap();
-            let fid_1: i32 = parts[2].parse().unwrap();
-            let dist_0: f64 = parts[3].parse().unwrap();
-            let dist_1: f64 = parts[4].parse().unwrap();
-            let norm_0: f64 = parts[5].parse().unwrap();
-            let norm_1: f64 = parts[6].parse().unwrap();
-            cell_face_id.insert(cid, vec![fid_0, fid_1]);
-            cell_face_dist.insert(cid, vec![dist_0, dist_1]);
-            cell_face_norm.insert(cid, vec![norm_0, norm_1]);
+        for i in 0..num_cell {
+            let cid = cell_face_i32[0][i];
+            cell_face_id.insert(cid, vec![cell_face_i32[1][i], cell_face_i32[2][i]]);
+            cell_face_dist.insert(cid, vec![cell_face_f64[0][i], cell_face_f64[1][i]]);
+            cell_face_norm.insert(cid, vec![cell_face_f64[2][i], cell_face_f64[3][i]]);
         }
 
         // read face to cell data
-        let face_cell_file = File::open(mesh_file.clone() + "_face_cell.csv")
-            .map_err(|_| Error1D::FileReadError {
-                caller: "Mesh1D".to_string(),
-                file_path: mesh_file.clone() + "_face_cell.csv",
-            })?;
-        let face_cell_reader = BufReader::new(face_cell_file);
+        let (_, face_cell_i32, face_cell_f64) = read_csv(
+            mesh_file.clone() + "_face_cell.csv",
+            "Mesh1D".to_string(),
+            vec![
+                "fid".to_string(),
+                "cid_0".to_string(),
+                "cid_1".to_string(),
+                "dist_0".to_string(),
+                "dist_1".to_string(),
+            ],
+            vec![true, true, true, false, false],
+        )?;
         let mut face_cell_id: HashMap<i32, (i32, i32)> = HashMap::new();
         let mut face_cell_dist: HashMap<i32, (f64, f64)> = HashMap::new();
-        for (i, line) in face_cell_reader.lines().enumerate() {
-            if i == 0 {
-                continue;  // skip header
-            }
-            let line = line.unwrap();
-            let parts: Vec<&str> = line.trim().split(',').collect();
-            let fid: i32 = parts[0].parse().unwrap();
-            let cid_0: i32 = parts[1].parse().unwrap();
-            let cid_1: i32 = parts[2].parse().unwrap();
-            let dist_0: f64 = parts[3].parse().unwrap();
-            let dist_1: f64 = parts[4].parse().unwrap();
-            face_cell_id.insert(fid, (cid_0, cid_1));
-            face_cell_dist.insert(fid, (dist_0, dist_1));
+        for i in 0..num_face {
+            let fid = face_cell_i32[0][i];
+            face_cell_id.insert(fid, (face_cell_i32[1][i], face_cell_i32[2][i]));
+            face_cell_dist.insert(fid, (face_cell_f64[0][i], face_cell_f64[1][i]));
         }
 
-        // read group cell data
-        let group_cell_file = File::open(mesh_file.clone() + "_group_cell.csv")
-            .map_err(|_| Error1D::FileReadError {
-                caller: "Mesh1D".to_string(),
-                file_path: mesh_file.clone() + "_group_cell.csv",
-            })?;
-        let group_cell_reader = BufReader::new(group_cell_file);
+        // group cell data
+        let (_, group_cell_i32, _) = read_csv(
+            mesh_file.clone() + "_group_cell.csv",
+            "Mesh1D".to_string(),
+            vec!["gc".to_string(), "cid".to_string()],
+            vec![true, true],
+        )?;
         let mut group_cell_set: HashSet<usize> = HashSet::new();
         let mut group_cell_id: HashMap<usize, Vec<i32>> = HashMap::new();
-        for (i, line) in group_cell_reader.lines().enumerate() {
-            if i == 0 {
-                continue;  // skip header
-            }
-            let line = line.unwrap();
-            let parts: Vec<&str> = line.trim().split(',').collect();
-            let gc: usize = parts[0].parse().unwrap();
-            let cid: i32 = parts[1].parse().unwrap();
+        for i in 0..group_cell_i32[0].len() {
+            let gc = group_cell_i32[0][i] as usize;
+            let cid = group_cell_i32[1][i];
             group_cell_set.insert(gc);
             group_cell_id.entry(gc).or_insert(Vec::new()).push(cid);
         }
         let group_cell: Vec<usize> = group_cell_set.into_iter().collect();
         let num_group_cell = group_cell.len();
 
-        // read group face data
-        let group_face_file = File::open(mesh_file.clone() + "_group_face.csv")
-            .map_err(|_| Error1D::FileReadError {
-                caller: "Mesh1D".to_string(),
-                file_path: mesh_file.clone() + "_group_face.csv",
-            })?;
-        let group_face_reader = BufReader::new(group_face_file);
+        // group face data
+        let (_, group_face_i32, _) = read_csv(
+            mesh_file.clone() + "_group_face.csv",
+            "Mesh1D".to_string(),
+            vec!["gf".to_string(), "fid".to_string()],
+            vec![true, true],
+        )?;
         let mut group_face_set: HashSet<usize> = HashSet::new();
         let mut group_face_id: HashMap<usize, Vec<i32>> = HashMap::new();
-        for (i, line) in group_face_reader.lines().enumerate() {
-            if i == 0 {
-                continue;  // skip header
-            }
-            let line = line.unwrap();
-            let parts: Vec<&str> = line.trim().split(',').collect();
-            let gf: usize = parts[0].parse().unwrap();
-            let fid: i32 = parts[1].parse().unwrap();
+        for i in 0..group_face_i32[0].len() {
+            let gf = group_face_i32[0][i] as usize;
+            let fid = group_face_i32[1][i];
             group_face_set.insert(gf);
             group_face_id.entry(gf).or_insert(Vec::new()).push(fid);
         }
@@ -368,100 +334,161 @@ impl Mesh1D {
 
     pub fn write(&self, write_file: String) -> Result<(), Error1D> {
         // write cell data
-        let path_cell = write_file.clone() + "_cell.csv";
-        let mut file_cell = File::create(&path_cell).map_err(|_| Error1D::FileWriteError {
-            caller: "Mesh1D".to_string(),
-            file_path: path_cell.clone(),
-        })?;
-        writeln!(file_cell, "cid,x,dx").unwrap();
-        for &cid in &self.cell_id {
-            writeln!(file_cell, "{},{:.6},{:.6}", cid, self.cell_x[&cid], self.cell_dx[&cid]).unwrap();
+        let mut cell_x_vec: Vec<f64> = Vec::new();
+        let mut cell_dx_vec: Vec<f64> = Vec::new();
+        for &cid in self.cell_id.iter() {
+            cell_x_vec.push(self.cell_x[&cid]);
+            cell_dx_vec.push(self.cell_dx[&cid]);
         }
-        
+        write_csv(
+            write_file.clone() + "_cell.csv",
+            "Mesh1D".to_string(),
+            vec!["cid".to_string(), "x".to_string(), "dx".to_string()],
+            vec![true, false, false],
+            vec![&self.cell_id],
+            vec![&cell_x_vec, &cell_dx_vec],
+        )?;
+
         // write face data
-        let path_face = write_file.clone() + "_face.csv";
-        let mut file_face = File::create(&path_face)
-            .map_err(|_| Error1D::FileWriteError {
-                caller: "Mesh1D".to_string(),
-                file_path: path_face.clone(),
-            })?;
-        writeln!(file_face, "fid,x").unwrap();
-        for &fid in &self.face_id {
-            writeln!(file_face, "{},{:.6}", fid, self.face_x[&fid]).unwrap();
+        let mut face_x_vec: Vec<f64> = Vec::new();
+        for &fid in self.face_id.iter() {
+            face_x_vec.push(self.face_x[&fid]);
         }
+        write_csv(
+            write_file.clone() + "_face.csv",
+            "Mesh1D".to_string(),
+            vec!["fid".to_string(), "x".to_string()],
+            vec![true, false],
+            vec![&self.face_id],
+            vec![&face_x_vec],
+        )?;
 
         // write cell to cell data
-        let path_cell_cell = write_file.clone() + "_cell_cell.csv";
-        let mut file_cell_cell = File::create(&path_cell_cell)
-            .map_err(|_| Error1D::FileWriteError {
-                caller: "Mesh1D".to_string(),
-                file_path: path_cell_cell.clone(),
-            })?;
-        writeln!(file_cell_cell, "cid,nid_0,nid_1,dist_0,dist_1").unwrap();
+        let mut nid_0_vec: Vec<i32> = Vec::new();
+        let mut nid_1_vec: Vec<i32> = Vec::new();
+        let mut dist_0_vec: Vec<f64> = Vec::new();
+        let mut dist_1_vec: Vec<f64> = Vec::new();
         for &cid in self.cell_id.iter() {
-            let nid_vec = &self.cell_cell_id[&cid];
-            let dist_vec = &self.cell_cell_dist[&cid];
-            writeln!(file_cell_cell, "{},{},{},{:.6},{:.6}", cid, nid_vec[0], nid_vec[1], dist_vec[0], dist_vec[1]).unwrap();
+            let nid_sub = &self.cell_cell_id[&cid];
+            let dist_sub = &self.cell_cell_dist[&cid];
+            nid_0_vec.push(nid_sub[0]);
+            nid_1_vec.push(nid_sub[1]);
+            dist_0_vec.push(dist_sub[0]);
+            dist_1_vec.push(dist_sub[1]);
         }
+        write_csv(
+            write_file.clone() + "_cell_cell.csv",
+            "Mesh1D".to_string(),
+            vec![
+                "cid".to_string(),
+                "nid_0".to_string(),
+                "nid_1".to_string(),
+                "dist_0".to_string(),
+                "dist_1".to_string(),
+            ],
+            vec![true, true, true, false, false],
+            vec![&self.cell_id, &nid_0_vec, &nid_1_vec],
+            vec![&dist_0_vec, &dist_1_vec],
+        )?;
 
         // write cell to face data
-        let path_cell_face = write_file.clone() + "_cell_face.csv";
-        let mut file_cell_face = File::create(&path_cell_face)
-            .map_err(|_| Error1D::FileWriteError {
-                caller: "Mesh1D".to_string(),
-                file_path: path_cell_face.clone(),
-            })?;
-        writeln!(file_cell_face, "cid,fid_0,fid_1,dist_0,dist_1,norm_0,norm_1").unwrap();
+        let mut fid_0_vec: Vec<i32> = Vec::new();
+        let mut fid_1_vec: Vec<i32> = Vec::new();
+        let mut dist_0_vec: Vec<f64> = Vec::new();
+        let mut dist_1_vec: Vec<f64> = Vec::new();
+        let mut norm_0_vec: Vec<f64> = Vec::new();
+        let mut norm_1_vec: Vec<f64> = Vec::new();
         for &cid in self.cell_id.iter() {
-            let fid_vec = &self.cell_face_id[&cid];
-            let dist_vec = &self.cell_face_dist[&cid];
-            let norm_vec = &self.cell_face_norm[&cid];
-            writeln!(file_cell_face, "{},{},{},{:.6},{:.6},{:.6},{:.6}", cid, fid_vec[0], fid_vec[1], dist_vec[0], dist_vec[1], norm_vec[0], norm_vec[1]).unwrap();
+            let fid_sub = &self.cell_face_id[&cid];
+            let dist_sub = &self.cell_face_dist[&cid];
+            let norm_sub = &self.cell_face_norm[&cid];
+            fid_0_vec.push(fid_sub[0]);
+            fid_1_vec.push(fid_sub[1]);
+            dist_0_vec.push(dist_sub[0]);
+            dist_1_vec.push(dist_sub[1]);
+            norm_0_vec.push(norm_sub[0]);
+            norm_1_vec.push(norm_sub[1]);
         }
+        write_csv(
+            write_file.clone() + "_cell_face.csv",
+            "Mesh1D".to_string(),
+            vec![
+                "cid".to_string(),
+                "fid_0".to_string(),
+                "fid_1".to_string(),
+                "dist_0".to_string(),
+                "dist_1".to_string(),
+                "norm_0".to_string(),
+                "norm_1".to_string(),
+            ],
+            vec![true, true, true, false, false, false, false],
+            vec![&self.cell_id, &fid_0_vec, &fid_1_vec],
+            vec![&dist_0_vec, &dist_1_vec, &norm_0_vec, &norm_1_vec],
+        )?;
 
         // write face to cell data
-        let path_face_cell = write_file.clone() + "_face_cell.csv";
-        let mut file_face_cell = File::create(&path_face_cell)
-            .map_err(|_| Error1D::FileWriteError {
-                caller: "Mesh1D".to_string(),
-                file_path: path_face_cell.clone(),
-            })?;
-        writeln!(file_face_cell, "fid,cid_0,cid_1,dist_0,dist_1").unwrap();
+        let mut cid_0_vec: Vec<i32> = Vec::new();
+        let mut cid_1_vec: Vec<i32> = Vec::new();
+        let mut dist_0_vec: Vec<f64> = Vec::new();
+        let mut dist_1_vec: Vec<f64> = Vec::new();
         for &fid in self.face_id.iter() {
-            let (cid_0, cid_1) = self.face_cell_id[&fid];
-            let (dist_0, dist_1) = self.face_cell_dist[&fid];
-            writeln!(file_face_cell, "{},{},{},{:.6},{:.6}", fid, cid_0, cid_1, dist_0, dist_1).unwrap();
+            let cid_sub = &self.face_cell_id[&fid];
+            let dist_sub = &self.face_cell_dist[&fid];
+            cid_0_vec.push(cid_sub.0);
+            cid_1_vec.push(cid_sub.1);
+            dist_0_vec.push(dist_sub.0);
+            dist_1_vec.push(dist_sub.1);
         }
+        write_csv(
+            write_file.clone() + "_face_cell.csv",
+            "Mesh1D".to_string(),
+            vec![
+                "fid".to_string(),
+                "cid_0".to_string(),
+                "cid_1".to_string(),
+                "dist_0".to_string(),
+                "dist_1".to_string(),
+            ],
+            vec![true, true, true, false, false],
+            vec![&self.face_id, &cid_0_vec, &cid_1_vec],
+            vec![&dist_0_vec, &dist_1_vec],
+        )?;
 
         // write group cell data
-        let path_group_cell = write_file.clone() + "_group_cell.csv";
-        let mut file_group_cell = File::create(&path_group_cell)
-            .map_err(|_| Error1D::FileWriteError {
-                caller: "Mesh1D".to_string(),
-                file_path: path_group_cell.clone(),
-            })?;
-        writeln!(file_group_cell, "gc,cid").unwrap();
-        for &gc in self.group_cell.iter() {
-            let cid_vec = &self.group_cell_id[&gc];
-            for &cid in cid_vec.iter() {
-                writeln!(file_group_cell, "{},{}", gc, cid).unwrap();
-            }
-        };
-
-        // write group face data
-        let path_group_face = write_file.clone() + "_group_face.csv";
-        let mut file_group_face = File::create(&path_group_face)
-            .map_err(|_| Error1D::FileWriteError {
-                caller: "Mesh1D".to_string(),
-                file_path: path_group_face.clone(),
-            })?;
-        writeln!(file_group_face, "gf,fid").unwrap();
-        for &gf in self.group_face.iter() {
-            let fid_vec = &self.group_face_id[&gf];
-            for &fid in fid_vec.iter() {
-                writeln!(file_group_face, "{},{}", gf, fid).unwrap();
+        let mut gc_vec: Vec<i32> = Vec::new();
+        let mut cid_vec: Vec<i32> = Vec::new();
+        for (&gc, cid_sub) in self.group_cell_id.iter() {
+            for &cid in cid_sub.iter() {
+                gc_vec.push(gc as i32);
+                cid_vec.push(cid);
             }
         }
+        write_csv(
+            write_file.clone() + "_group_cell.csv",
+            "Mesh1D".to_string(),
+            vec!["gc".to_string(), "cid".to_string()],
+            vec![true, true],
+            vec![&gc_vec, &cid_vec],
+            vec![],
+        )?;
+
+        // write group face data
+        let mut gf_vec: Vec<i32> = Vec::new();
+        let mut fid_vec: Vec<i32> = Vec::new();
+        for (&gf, fid_sub) in self.group_face_id.iter() {
+            for &fid in fid_sub.iter() {
+                gf_vec.push(gf as i32);
+                fid_vec.push(fid);
+            }
+        }
+        write_csv(
+            write_file.clone() + "_group_face.csv",
+            "Mesh1D".to_string(),
+            vec!["gf".to_string(), "fid".to_string()],
+            vec![true, true],
+            vec![&gf_vec, &fid_vec],
+            vec![],
+        )?;
 
         // return
         Ok(())

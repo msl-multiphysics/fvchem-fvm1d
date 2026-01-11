@@ -1,8 +1,7 @@
 use crate::domain_0d::Domain0D;
-use crate::error_1d::Error1D;
+use crate::utils_csv::{read_csv, write_csv};
+use crate::utils_error::Error1D;
 use crate::variable_1d::Variable1D;
-use std::fs::File;
-use std::io::{BufRead, BufReader, Write};
 
 pub struct Scalar0D {
     // struct ids
@@ -114,27 +113,14 @@ impl Scalar0D {
         // get struct ids
         let dom0d_id = dom0d.dom0d_id;
 
-        // raw face data
-        let face_file = File::open(value_file.clone() + "_0d.csv");
-        let face_file = match face_file {
-            Ok(f) => f,
-            Err(_) => {
-                return Err(Error1D::FileReadError {
-                    caller: "Scalar0D::new_from_file".to_string(),
-                    file_path: value_file.clone() + "_0d.csv",
-                })
-            }
-        };
-        let reader = BufReader::new(face_file);
-        let mut lines = reader.lines();
-
-        // skip header
-        lines.next();
-
-        // read face value
-        let line = lines.next().unwrap().unwrap();
-        let parts: Vec<&str> = line.split(',').collect();
-        let face_value: f64 = parts[2].parse().unwrap();
+        // read face data
+        let(_, _, face_f64) = read_csv(
+            value_file.clone() + "_0d.csv",
+            "Scalar0D".to_string(),
+            vec!["fid".to_string(), "x".to_string(), "u".to_string()],
+            vec![true, false, false],
+        )?;
+        let face_value = face_f64[1][0];
         let face_value_prev = face_value;
 
         // output file data
@@ -199,29 +185,50 @@ impl Scalar0D {
         scl.face_value_prev = scl.face_value;
     }
 
-    pub fn write_steady(dom: &Domain0D, scl: &Scalar0D) {
+    pub fn write_steady(dom: &Domain0D, scl: &Scalar0D) -> Result<(), Error1D> {
         // output only if specified
         if !scl.is_write {
-            return;
+            return Ok(());
         }
 
         // write face data
-        let mut file_face = File::create(scl.write_file.clone() + "_0d.csv").unwrap();
-        writeln!(file_face, "fid,x,u").unwrap();
-        writeln!(file_face, "{},{:.6},{:.6}", dom.face_id, dom.face_x, scl.face_value).unwrap();
+        let face_id_vec = vec![dom.face_id];
+        let face_x_vec = vec![dom.face_x];
+        let face_value_vec = vec![scl.face_value];
+        write_csv(
+            scl.write_file.clone() + "_0d.csv",
+            "Scalar0D".to_string(),
+            vec!["fid".to_string(), "x".to_string(), "u".to_string()],
+            vec![true, false, false],
+            vec![&face_id_vec],
+            vec![&face_x_vec, &face_value_vec],
+        )?;
+
+        // return
+        Ok(())
     }
 
-    pub fn write_transient(dom: &Domain0D, scl: &Scalar0D, ts: usize) {
+    pub fn write_transient(dom: &Domain0D, scl: &Scalar0D, ts: usize) -> Result<(), Error1D> {
         // output only if specified
         if !scl.is_write || scl.write_step <= 0|| ts % scl.write_step != 0 {
-            return;
+            return Ok(());
         }
 
         // write face data
-        let mut file_face =
-            File::create(scl.write_file.clone() + "_0d_" + &ts.to_string() + ".csv").unwrap();
-        writeln!(file_face, "fid,x,u").unwrap();
-        writeln!(file_face, "{},{:.6},{:.6}", dom.face_id, dom.face_x, scl.face_value).unwrap();
+        let face_id_vec = vec![dom.face_id];
+        let face_x_vec = vec![dom.face_x];
+        let face_value_vec = vec![scl.face_value];
+        write_csv(
+            scl.write_file.clone() + "_0d_" + &ts.to_string() + ".csv",
+            "Scalar0D".to_string(),
+            vec!["fid".to_string(), "x".to_string(), "u".to_string()],
+            vec![true, false, false],
+            vec![&face_id_vec],
+            vec![&face_x_vec, &face_value_vec],
+        )?;
+
+        // return
+        Ok(())
     }
 
 }

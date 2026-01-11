@@ -1,4 +1,4 @@
-use crate::error_1d::Error1D;
+use crate::utils_error::Error1D;
 use crate::problem_1d::Problem1D;
 use crate::scalar_0d::Scalar0D;
 use crate::scalar_1d::Scalar1D;
@@ -87,7 +87,7 @@ pub trait TransientBase {
             let time_0 = Instant::now();
 
             // write scalars and variables
-            self.write_scalar_variable(prob, ts);
+            self.write_scalar_variable(prob, ts)?;
 
             let time_1 = Instant::now();
 
@@ -271,17 +271,18 @@ pub trait TransientBase {
         }
     }
 
-    fn write_scalar_variable(&self, prob: &mut Problem1D, ts: usize) {
+    fn write_scalar_variable(&self, prob: &mut Problem1D, ts: usize) -> Result<(), Error1D> {
         // write scalars and variables
         for scl0d in &prob.scl0d {
-            Scalar0D::write_transient(&prob.dom0d[scl0d.dom0d_id], scl0d, ts);
+            Scalar0D::write_transient(&prob.dom0d[scl0d.dom0d_id], scl0d, ts)?;
         }
         for scl1d in &prob.scl1d {
-            Scalar1D::write_transient(&prob.dom1d[scl1d.dom1d_id], scl1d, ts);
+            Scalar1D::write_transient(&prob.dom1d[scl1d.dom1d_id], scl1d, ts)?;
         }
         for var in &prob.var1d {
-            Variable1D::write_transient(&prob.dom1d[var.dom1d_id], var, ts);
+            Variable1D::write_transient(&prob.dom1d[var.dom1d_id], var, ts)?;
         }
+        Ok(())
     }
 
 }

@@ -1,5 +1,5 @@
 use crate::domain_1d::Domain1D;
-use crate::error_1d::Error1D;
+use crate::utils_error::Error1D;
 
 pub struct Domain0D {
     // struct ids

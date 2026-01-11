@@ -1,4 +1,4 @@
-use crate::error_1d::Error1D;
+use crate::utils_error::Error1D;
 use crate::mesh_1d::Mesh1D;
 use std::collections::{HashMap, HashSet};
 

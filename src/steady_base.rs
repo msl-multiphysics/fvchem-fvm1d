@@ -1,4 +1,4 @@
-use crate::error_1d::Error1D;
+use crate::utils_error::Error1D;
 use crate::problem_1d::Problem1D;
 use crate::scalar_0d::Scalar0D;
 use crate::scalar_1d::Scalar1D;
@@ -131,7 +131,7 @@ pub trait SteadyBase {
         let time_0 = Instant::now();
 
         // write scalars and variables
-        self.write_scalar_variable(prob);
+        self.write_scalar_variable(prob)?;
 
         let time_end = Instant::now();
         let time_write = time_end.duration_since(time_0);
@@ -227,17 +227,18 @@ pub trait SteadyBase {
         }
     }
 
-    fn write_scalar_variable(&self, prob: &mut Problem1D) {
+    fn write_scalar_variable(&self, prob: &mut Problem1D) -> Result<(), Error1D> {
         // write scalars and variables
         for scl0d in &prob.scl0d {
-            Scalar0D::write_steady(&prob.dom0d[scl0d.dom0d_id], scl0d);
+            Scalar0D::write_steady(&prob.dom0d[scl0d.dom0d_id], scl0d)?;
         }
         for scl1d in &prob.scl1d {
-            Scalar1D::write_steady(&prob.dom1d[scl1d.dom1d_id], scl1d);
+            Scalar1D::write_steady(&prob.dom1d[scl1d.dom1d_id], scl1d)?;
         }
         for var in &prob.var1d {
-            Variable1D::write_steady(&prob.dom1d[var.dom1d_id], var);
+            Variable1D::write_steady(&prob.dom1d[var.dom1d_id], var)?;
         }
+        Ok(())
     }
 
 }

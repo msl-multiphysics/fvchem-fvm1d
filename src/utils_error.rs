@@ -99,4 +99,10 @@ pub enum Error1D {
         file_path: String,
     },
 
+    #[error("{caller}: File header does not match expected pattern: {file_path}.")]
+    InvalidFileHeader {
+        caller: String,
+        file_path: String,
+    },
+
 }

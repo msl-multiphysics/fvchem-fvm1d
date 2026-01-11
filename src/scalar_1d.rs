@@ -1,9 +1,8 @@
 use crate::domain_1d::Domain1D;
-use crate::error_1d::Error1D;
+use crate::utils_csv::{read_csv, write_csv};
+use crate::utils_error::Error1D;
 use crate::variable_1d::Variable1D;
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{BufRead, BufReader, Write};
 
 pub struct Scalar1D {
     // struct ids
@@ -156,77 +155,37 @@ impl Scalar1D {
         // get struct ids
         let dom1d_id = dom1d.dom1d_id;
 
-        // raw cell data
-        let cell_file = File::open(value_file.clone() + "_cell.csv");
-        let cell_file = match cell_file {
-            Ok(f) => f,
-            Err(_) => {
-                return Err(Error1D::FileNotFound{caller: "Scalar1D".to_string(), file_path: value_file.clone() + "_cell.csv" });
-            }
-        };
-        let cell_reader = BufReader::new(cell_file);
+        // read cell data
+        let (_, cell_i32, cell_f64) = read_csv(
+            value_file.clone() + "_cell.csv",
+            "Scalar1D".to_string(),
+            vec!["cid".to_string(), "x".to_string(), "u".to_string()],
+            vec![true, false, false],
+        )?;
         let mut cell_value_raw: HashMap<i32, f64> = HashMap::new();
-        for (i, line) in cell_reader.lines().enumerate() {
-            let line = match line {
-                Ok(l) => l,
-                Err(_) => {
-                    return Err(Error1D::FileReadError{caller: "Scalar1D".to_string(), file_path: value_file.clone() + "_cell.csv" });
-                }
-            };
-            if i == 0 {
-                continue;  // skip header
-            }
-            let parts: Vec<&str> = line.split(',').collect();
-            let cid: i32 = parts[0].trim().parse().unwrap();
-            let val: f64 = parts[2].trim().parse().unwrap();
-            cell_value_raw.insert(cid, val);
+        for i in 0..cell_i32[0].len() {
+            cell_value_raw.insert(cell_i32[0][i], cell_f64[1][i]);
         }
-
-        // cell data
         let mut cell_value: HashMap<i32, f64> = HashMap::new();
         for &cid in dom1d.cell_id.iter() {
-            let val = match cell_value_raw.get(&cid) {
-                Some(v) => *v,
-                None => {return Err(Error1D::InvalidCellID{caller: "Scalar1D".to_string(), cid, parent: "file".to_string()});}
-            };
-            cell_value.insert(cid, val);
+            cell_value.insert(cid, cell_value_raw[&cid]);
         }
         let cell_value_prev: HashMap<i32, f64> = cell_value.clone();
 
-        // raw face data
-        let face_file = File::open(value_file.clone() + "_face.csv");
-        let face_file = match face_file {
-            Ok(f) => f,
-            Err(_) => {
-                return Err(Error1D::FileNotFound{caller: "Scalar1D".to_string(), file_path: value_file.clone() + "_face.csv" });
-            }
-        };
-        let face_reader = BufReader::new(face_file);
+        // read face data
+        let (_, face_i32, face_f64) = read_csv(
+            value_file.clone() + "_face.csv",
+            "Scalar1D".to_string(),
+            vec!["fid".to_string(), "x".to_string(), "u".to_string()],
+            vec![true, false, false],
+        )?;
         let mut face_value_raw: HashMap<i32, f64> = HashMap::new();
-        for (i, line) in face_reader.lines().enumerate() {
-            let line = match line {
-                Ok(l) => l,
-                Err(_) => {
-                    return Err(Error1D::FileReadError{caller: "Scalar1D".to_string(), file_path: value_file.clone() + "_face.csv" });
-                }
-            };
-            if i == 0 {
-                continue;  // skip header
-            }
-            let parts: Vec<&str> = line.split(',').collect();
-            let fid: i32 = parts[0].trim().parse().unwrap();
-            let val: f64 = parts[2].trim().parse().unwrap();
-            face_value_raw.insert(fid, val);
+        for i in 0..face_i32[0].len() {
+            face_value_raw.insert(face_i32[0][i], face_f64[1][i]);
         }
-
-        // face data
         let mut face_value: HashMap<i32, f64> = HashMap::new();
         for &fid in dom1d.face_id.iter() {
-            let val = match face_value_raw.get(&fid) {
-                Some(v) => *v,
-                None => {return Err(Error1D::InvalidFaceID{caller: "Scalar1D".to_string(), fid, parent: "file".to_string()});}
-            };
-            face_value.insert(fid, val);
+            face_value.insert(fid, face_value_raw[&fid]);
         }
         let face_value_prev: HashMap<i32, f64> = face_value.clone();
         
@@ -313,67 +272,89 @@ impl Scalar1D {
         scl.face_value_prev = scl.face_value.clone();
     }
 
-    pub fn write_steady(dom: &Domain1D, scl: &Scalar1D) {
+    pub fn write_steady(dom: &Domain1D, scl: &Scalar1D) -> Result<(), Error1D> {
         // output only if specified
         if !scl.is_write {
-            return;
+            return Ok(());
         }
 
         // write cell data
-        let mut file_cell = File::create(scl.write_file.clone() + "_cell.csv").unwrap();
-        writeln!(file_cell, "cid,x,u").unwrap();
+        let mut cell_x_vec: Vec<f64> = Vec::new();
+        let mut cell_value_vec: Vec<f64> = Vec::new();
         for &cid in dom.cell_id.iter() {
-            writeln!(
-                file_cell,
-                "{},{:.6},{:.6}",
-                cid, dom.cell_x[&cid], scl.cell_value[&cid]
-            )
-            .unwrap();
+            cell_x_vec.push(dom.cell_x[&cid]);
+            cell_value_vec.push(scl.cell_value[&cid]);
         }
+        write_csv(
+            scl.write_file.clone() + "_cell.csv",
+            "Scalar1D".to_string(),
+            vec!["cid".to_string(), "x".to_string(), "u".to_string()],
+            vec![true, false, false],
+            vec![&dom.cell_id],
+            vec![&cell_x_vec, &cell_value_vec],
+        )?;
 
         // write face data
-        let mut file_face = File::create(scl.write_file.clone() + "_face.csv").unwrap();
-        writeln!(file_face, "fid,x,u").unwrap();
+        let mut face_x_vec: Vec<f64> = Vec::new();
+        let mut face_value_vec: Vec<f64> = Vec::new();
         for &fid in dom.face_id.iter() {
-            writeln!(
-                file_face,
-                "{},{:.6},{:.6}",
-                fid, dom.face_x[&fid], scl.face_value[&fid]
-            )
-            .unwrap();
+            face_x_vec.push(dom.face_x[&fid]);
+            face_value_vec.push(scl.face_value[&fid]);
         }
+        write_csv(
+            scl.write_file.clone() + "_face.csv",
+            "Scalar1D".to_string(),
+            vec!["fid".to_string(), "x".to_string(), "u".to_string()],
+            vec![true, false, false],
+            vec![&dom.face_id],
+            vec![&face_x_vec, &face_value_vec],
+        )?;
+
+        // return
+        Ok(())
+
     }
 
-    pub fn write_transient(dom: &Domain1D, scl: &Scalar1D, ts: usize) {
+    pub fn write_transient(dom: &Domain1D, scl: &Scalar1D, ts: usize) -> Result<(), Error1D> {
         // output only if specified
         if !scl.is_write || ts % scl.write_step != 0 {
-            return;
+            return Ok(());
         }
 
         // write cell data
-        let mut file_cell =
-            File::create(scl.write_file.clone() + "_cell_" + &ts.to_string() + ".csv").unwrap();
-        writeln!(file_cell, "cid,x,u").unwrap();
+        let mut cell_x_vec: Vec<f64> = Vec::new();
+        let mut cell_value_vec: Vec<f64> = Vec::new();
         for &cid in dom.cell_id.iter() {
-            writeln!(
-                file_cell,
-                "{},{:.6},{:.6}",
-                cid, dom.cell_x[&cid], scl.cell_value[&cid]
-            )
-            .unwrap();
+            cell_x_vec.push(dom.cell_x[&cid]);
+            cell_value_vec.push(scl.cell_value[&cid]);
         }
+        write_csv(
+            scl.write_file.clone() + "_cell_" + &ts.to_string() + ".csv",
+            "Scalar1D".to_string(),
+            vec!["cid".to_string(), "x".to_string(), "u".to_string()],
+            vec![true, false, false],
+            vec![&dom.cell_id],
+            vec![&cell_x_vec, &cell_value_vec],
+        )?;
 
         // write face data
-        let mut file_face =
-            File::create(scl.write_file.clone() + "_face_" + &ts.to_string() + ".csv").unwrap();
-        writeln!(file_face, "fid,x,u").unwrap();
+        let mut face_x_vec: Vec<f64> = Vec::new();
+        let mut face_value_vec: Vec<f64> = Vec::new();
         for &fid in dom.face_id.iter() {
-            writeln!(
-                file_face,
-                "{},{:.6},{:.6}",
-                fid, dom.face_x[&fid], scl.face_value[&fid]
-            )
-            .unwrap();
+            face_x_vec.push(dom.face_x[&fid]);
+            face_value_vec.push(scl.face_value[&fid]);
         }
+        write_csv(
+            scl.write_file.clone() + "_face_" + &ts.to_string() + ".csv",
+            "Scalar1D".to_string(),
+            vec!["fid".to_string(), "x".to_string(), "u".to_string()],
+            vec![true, false, false],
+            vec![&dom.face_id],
+            vec![&face_x_vec, &face_value_vec],
+        )?;
+
+        // return
+        Ok(())
+
     }
 }

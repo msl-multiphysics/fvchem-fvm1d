@@ -1,6 +1,6 @@
 use crate::domain_0d::Domain0D;
 use crate::domain_1d::Domain1D;
-use crate::error_1d::Error1D;
+use crate::utils_error::Error1D;
 use crate::mesh_1d::Mesh1D;
 use crate::scalar_0d::Scalar0D;
 use crate::scalar_1d::Scalar1D;
