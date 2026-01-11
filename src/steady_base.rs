@@ -196,10 +196,10 @@ pub trait SteadyBase {
         for scl0d in &mut prob.scl0d {
             // &prob.dom0d[scl0d.dom0d_id] -> Domain0D
             // &prob.var1d -> Vec<Variable1D>
-            Scalar0D::update_iter(&prob.dom0d[scl0d.dom0d_id], scl0d, &prob.var1d);
+            Scalar0D::update_iter(&prob.dom0d[scl0d.dom0d_id], scl0d, &prob.var1d, 0);
         }
         for scl1d in &mut prob.scl1d {
-            Scalar1D::update_iter(&prob.dom1d[scl1d.dom1d_id], scl1d, &prob.var1d);
+            Scalar1D::update_iter(&prob.dom1d[scl1d.dom1d_id], scl1d, &prob.var1d, 0);
         }
     }
 

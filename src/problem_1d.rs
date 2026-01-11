@@ -84,7 +84,7 @@ impl Problem1D {
     pub fn add_scl0d_from_function(
         prob: &mut Problem1D,
         dom0d_id: usize,
-        value_func: fn(f64, f64, Vec<f64>) -> f64,
+        value_func: fn(usize, f64, Vec<f64>) -> f64,
         value_var: Vec<usize>,
         output_file: String,
         output_step: usize,
@@ -103,6 +103,25 @@ impl Problem1D {
             output_file,
             output_step,
         )?;
+        prob.scl0d.push(scl0d);
+
+        // return
+        Ok(scl0d_id)
+    }
+
+    pub fn add_scl0d_from_file(
+        prob: &mut Problem1D,
+        dom0d_id: usize,
+        value_file: String,
+        output_file: String,
+        output_step: usize,
+    ) -> Result<usize, Error1D> {
+        // get scl0d_id
+        let scl0d_id = prob.scl0d.len();
+
+        // create Scalar0D
+        let dom0d = &prob.dom0d[dom0d_id];
+        let scl0d = Scalar0D::new_from_file(scl0d_id, dom0d, value_file, output_file, output_step)?;
         prob.scl0d.push(scl0d);
 
         // return
@@ -131,7 +150,7 @@ impl Problem1D {
     pub fn add_scl1d_from_function(
         prob: &mut Problem1D,
         dom1d_id: usize,
-        value_func: fn(f64, f64, Vec<f64>) -> f64,
+        value_func: fn(usize, f64, Vec<f64>) -> f64,
         value_var: Vec<usize>,
         output_file: String,
         output_step: usize,
@@ -150,6 +169,25 @@ impl Problem1D {
             output_file,
             output_step,
         )?;
+        prob.scl1d.push(scl1d);
+
+        // return
+        Ok(scl1d_id)
+    }
+
+    pub fn add_scl1d_from_file(
+        prob: &mut Problem1D,
+        dom1d_id: usize,
+        value_file: String,
+        output_file: String,
+        output_step: usize,
+    ) -> Result<usize, Error1D> {
+        // get scl1d_id
+        let scl1d_id = prob.scl1d.len();
+
+        // create Scalar1D
+        let dom1d = &prob.dom1d[dom1d_id];
+        let scl1d = Scalar1D::new_from_file(scl1d_id, dom1d, value_file, output_file, output_step)?;
         prob.scl1d.push(scl1d);
 
         // return

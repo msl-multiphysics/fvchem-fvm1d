@@ -1,7 +1,7 @@
 use fvchem_fvm1d::*;
 use std::fs::create_dir_all;
 
-fn mtrn_func(_t: f64, _x: f64, vars: Vec<f64>) -> f64 {
+fn mtrn_func(_t: usize, _x: f64, vars: Vec<f64>) -> f64 {
     let c = vars[0];
     let n = 0.2 * (c - 1.0); // mass transfer function
     n

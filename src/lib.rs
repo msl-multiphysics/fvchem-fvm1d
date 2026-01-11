@@ -14,7 +14,6 @@ pub use crate::transient_diffadv::*;
 pub mod domain_0d;
 pub mod domain_1d;
 pub mod error_1d;
-pub mod input_1d;
 pub mod limiter_1d;
 pub mod mesh_1d;
 pub mod problem_1d;

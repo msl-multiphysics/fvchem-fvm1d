@@ -92,7 +92,7 @@ impl Variable1D {
 
         // write cell data
         let mut file_cell = File::create(var.output_file.clone() + "_cell.csv").unwrap();
-        writeln!(file_cell, "x,u").unwrap();
+        writeln!(file_cell, "cid,x,u").unwrap();
         for &cid in dom.cell_id.iter() {
             writeln!(
                 file_cell,
@@ -104,7 +104,7 @@ impl Variable1D {
 
         // write face data
         let mut file_face = File::create(var.output_file.clone() + "_face.csv").unwrap();
-        writeln!(file_face, "x,u").unwrap();
+        writeln!(file_face, "fid,x,u").unwrap();
         for &fid in dom.face_id.iter() {
             writeln!(
                 file_face,
@@ -124,7 +124,7 @@ impl Variable1D {
         // write cell data
         let mut file_cell =
             File::create(var.output_file.clone() + "_cell_" + &ts.to_string() + ".csv").unwrap();
-        writeln!(file_cell, "x,u").unwrap();
+        writeln!(file_cell, "cid,x,u").unwrap();
         for &cid in dom.cell_id.iter() {
             writeln!(
                 file_cell,
@@ -137,7 +137,7 @@ impl Variable1D {
         // write face data
         let mut file_face =
             File::create(var.output_file.clone() + "_face_" + &ts.to_string() + ".csv").unwrap();
-        writeln!(file_face, "x,u").unwrap();
+        writeln!(file_face, "fid,x,u").unwrap();
         for &fid in dom.face_id.iter() {
             writeln!(
                 file_face,

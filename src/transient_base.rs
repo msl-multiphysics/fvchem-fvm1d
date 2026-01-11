@@ -86,7 +86,7 @@ pub trait TransientBase {
                 let time_i0 = Instant::now();
 
                 // update scalars
-                self.update_scalar_iter(prob);
+                self.update_scalar_iter(prob, ts);
 
                 let time_i1 = Instant::now();
 
@@ -216,15 +216,15 @@ pub trait TransientBase {
         }
     }
 
-    fn update_scalar_iter(&self, prob: &mut Problem1D) {
+    fn update_scalar_iter(&self, prob: &mut Problem1D, ts: usize) {
         // iterate over scalars and update
         for scl0d in &mut prob.scl0d {
             // &prob.dom0d[scl0d.dom0d_id] -> Domain0D
             // &prob.var1d -> Vec<Variable1D>
-            Scalar0D::update_iter(&prob.dom0d[scl0d.dom0d_id], scl0d, &prob.var1d);
+            Scalar0D::update_iter(&prob.dom0d[scl0d.dom0d_id], scl0d, &prob.var1d, ts);
         }
         for scl1d in &mut prob.scl1d {
-            Scalar1D::update_iter(&prob.dom1d[scl1d.dom1d_id], scl1d, &prob.var1d);
+            Scalar1D::update_iter(&prob.dom1d[scl1d.dom1d_id], scl1d, &prob.var1d, ts);
         }
     }
 

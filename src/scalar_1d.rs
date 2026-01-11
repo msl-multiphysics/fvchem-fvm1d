@@ -1,6 +1,5 @@
 use crate::domain_1d::Domain1D;
 use crate::error_1d::Error1D;
-use crate::input_1d::Input1D;
 use crate::variable_1d::Variable1D;
 use std::collections::HashMap;
 use std::fs::File;
@@ -24,8 +23,10 @@ pub struct Scalar1D {
     pub output_step: usize,
     pub output_file: String,
 
-    // input type
-    pub input_type: Input1D,
+    // non-constant input type
+    pub is_constant: bool,
+    pub value_func: fn(usize, f64, Vec<f64>) -> f64,
+    pub value_var: Vec<usize>,
 }
 
 impl Scalar1D {
@@ -56,8 +57,10 @@ impl Scalar1D {
         // output file data
         let is_output = !output_file.is_empty() || output_step > 0;
 
-        // input type
-        let input_type = Input1D::Constant(value);
+        // set input to constant
+        let is_constant = true;
+        let value_func = |_: usize, _: f64, _: Vec<f64>| 0.0;
+        let value_var: Vec<usize> = Vec::new();
 
         // return
         Ok(Scalar1D {
@@ -70,7 +73,9 @@ impl Scalar1D {
             is_output,
             output_step,
             output_file,
-            input_type,
+            is_constant,
+            value_func,
+            value_var,
         })
     }
 
@@ -78,7 +83,7 @@ impl Scalar1D {
         scl1d_id: usize,
         dom1d: &Domain1D,
         var1d_all: &Vec<Variable1D>,
-        value_func: fn(f64, f64, Vec<f64>) -> f64,
+        value_func: fn(usize, f64, Vec<f64>) -> f64,
         value_var: Vec<usize>,
         output_file: String,
         output_step: usize,
@@ -98,7 +103,7 @@ impl Scalar1D {
             }
 
             // update scalar value
-            let scl_val = (value_func)(0.0, x, var_val.clone());
+            let scl_val = (value_func)(0, x, var_val.clone());
             cell_value.insert(cid, scl_val);
         }
         let cell_value_prev: HashMap<i32, f64> = cell_value.clone();
@@ -115,7 +120,7 @@ impl Scalar1D {
             }
 
             // update scalar value
-            let scl_val = (value_func)(0.0, x, var_val.clone());
+            let scl_val = (value_func)(0, x, var_val.clone());
             face_value.insert(fid, scl_val);
         }
         let face_value_prev: HashMap<i32, f64> = face_value.clone();
@@ -123,8 +128,8 @@ impl Scalar1D {
         // output file data
         let is_output = !output_file.is_empty() || output_step > 0;
 
-        // input type
-        let input_type = Input1D::Function(value_func, value_var.clone());
+        // set input to non-constant
+        let is_constant = false;
 
         // return
         Ok(Scalar1D {
@@ -137,7 +142,9 @@ impl Scalar1D {
             is_output,
             output_step,
             output_file,
-            input_type,
+            is_constant,
+            value_func,
+            value_var,
         })
     }
 
@@ -228,8 +235,10 @@ impl Scalar1D {
         // output file data
         let is_output = !output_file.is_empty() || output_step > 0;
 
-        // input type
-        let input_type = Input1D::File(value_file.clone());
+        // set input to constant
+        let is_constant = true;
+        let value_func = |_: usize, _: f64, _: Vec<f64>| 0.0;
+        let value_var: Vec<usize> = Vec::new();
 
         // return
         Ok(Scalar1D {
@@ -242,50 +251,46 @@ impl Scalar1D {
             is_output,
             output_step,
             output_file,
-            input_type,
+            is_constant,
+            value_func,
+            value_var,
         })
     }
 
-    pub fn update_iter(dom: &Domain1D, scl: &mut Scalar1D, var_all: &Vec<Variable1D>) {
-        // update based on input type
-        match &scl.input_type {
-            Input1D::Constant(_val) => {
-                return;  // no update needed
-            }
-            Input1D::File(_file_name) => {
-                return;  // no update needed
-            }
-            Input1D::Function(value_func, value_var) => {
-                // iterate over cells
-                for &cid in dom.cell_id.iter() {
-                    // get position and variable values
-                    let x = dom.cell_x[&cid];
-                    let mut var_val: Vec<f64> = Vec::new();
-                    for v in value_var {
-                        // var_all[*v] -> Variable1D at index *v
-                        var_val.push(var_all[*v].cell_value[&cid]);
-                    }
+    pub fn update_iter(dom: &Domain1D, scl: &mut Scalar1D, var_all: &Vec<Variable1D>, ts: usize) {
+        // update only if non-constant
+        if scl.is_constant {
+            return;
+        }
 
-                    // update scalar value
-                    let scl_val = (value_func)(0.0, x, var_val.clone());
-                    scl.cell_value.insert(cid, scl_val);
-                }
-
-                // iterate over faces
-                for &fid in dom.face_id.iter() {
-                    // get position and variable values
-                    let x = dom.face_x[&fid];
-                    let mut var_val: Vec<f64> = Vec::new();
-                    for v in value_var {
-                        // var_all[*v] -> Variable1D at index *v
-                        var_val.push(var_all[*v].face_value[&fid]);
-                    }
-
-                    // update scalar value
-                    let scl_val = (value_func)(0.0, x, var_val.clone());
-                    scl.face_value.insert(fid, scl_val);
-                }
+        // iterate over cells
+        for &cid in dom.cell_id.iter() {
+            // get position and variable values
+            let x = dom.cell_x[&cid];
+            let mut var_val: Vec<f64> = Vec::new();
+            for v in &scl.value_var {
+                // var_all[*v] -> Variable1D at index *v
+                var_val.push(var_all[*v].cell_value[&cid]);
             }
+
+            // update scalar value
+            let scl_val = (&scl.value_func)(0, x, var_val.clone());
+            scl.cell_value.insert(cid, scl_val);
+        }
+
+        // iterate over faces
+        for &fid in dom.face_id.iter() {
+            // get position and variable values
+            let x = dom.face_x[&fid];
+            let mut var_val: Vec<f64> = Vec::new();
+            for v in &scl.value_var {
+                // var_all[*v] -> Variable1D at index *v
+                var_val.push(var_all[*v].face_value[&fid]);
+            }
+
+            // update scalar value
+            let scl_val = (&scl.value_func)(ts, x, var_val.clone());
+            scl.face_value.insert(fid, scl_val);
         }
 
     }
@@ -336,7 +341,7 @@ impl Scalar1D {
         // write cell data
         let mut file_cell =
             File::create(scl.output_file.clone() + "_cell_" + &ts.to_string() + ".csv").unwrap();
-        writeln!(file_cell, "x,u").unwrap();
+        writeln!(file_cell, "cid,x,u").unwrap();
         for &cid in dom.cell_id.iter() {
             writeln!(
                 file_cell,
@@ -349,7 +354,7 @@ impl Scalar1D {
         // write face data
         let mut file_face =
             File::create(scl.output_file.clone() + "_face_" + &ts.to_string() + ".csv").unwrap();
-        writeln!(file_face, "x,u").unwrap();
+        writeln!(file_face, "fid,x,u").unwrap();
         for &fid in dom.face_id.iter() {
             writeln!(
                 file_face,
