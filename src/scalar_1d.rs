@@ -19,9 +19,9 @@ pub struct Scalar1D {
     pub face_value_prev: HashMap<i32, f64>,
 
     // output file data
-    pub is_output: bool,
-    pub output_step: usize,
-    pub output_file: String,
+    pub is_write: bool,
+    pub write_step: usize,
+    pub write_file: String,
 
     // non-constant input type
     pub is_constant: bool,
@@ -53,9 +53,9 @@ impl Scalar1D {
         let face_value_prev: HashMap<i32, f64> = face_value.clone();
 
         // output file data
-        let is_output = false;
-        let output_step = 0;
-        let output_file = String::new();
+        let is_write = false;
+        let write_step = 0;
+        let write_file = String::new();
 
         // set input to constant
         let is_constant = true;
@@ -70,9 +70,9 @@ impl Scalar1D {
             cell_value_prev,
             face_value,
             face_value_prev,
-            is_output,
-            output_step,
-            output_file,
+            is_write,
+            write_step,
+            write_file,
             is_constant,
             value_func,
             value_var,
@@ -124,9 +124,9 @@ impl Scalar1D {
         let face_value_prev: HashMap<i32, f64> = face_value.clone();
 
         // output file data
-        let is_output = false;
-        let output_step = 0;
-        let output_file = String::new();
+        let is_write = false;
+        let write_step = 0;
+        let write_file = String::new();
 
         // set input to non-constant
         let is_constant = false;
@@ -139,9 +139,9 @@ impl Scalar1D {
             cell_value_prev,
             face_value,
             face_value_prev,
-            is_output,
-            output_step,
-            output_file,
+            is_write,
+            write_step,
+            write_file,
             is_constant,
             value_func,
             value_var,
@@ -231,9 +231,9 @@ impl Scalar1D {
         let face_value_prev: HashMap<i32, f64> = face_value.clone();
         
         // output file data
-        let is_output = false;
-        let output_step = 0;
-        let output_file = String::new();
+        let is_write = false;
+        let write_step = 0;
+        let write_file = String::new();
 
         // set input to constant
         let is_constant = true;
@@ -248,25 +248,25 @@ impl Scalar1D {
             cell_value_prev,
             face_value,
             face_value_prev,
-            is_output,
-            output_step,
-            output_file,
+            is_write,
+            write_step,
+            write_file,
             is_constant,
             value_func,
             value_var,
         })
     }
 
-    pub fn set_output_steady(scl: &mut Scalar1D, output_file: String) {
-        scl.is_output = true;
-        scl.output_file = output_file;
-        scl.output_step = 0;
+    pub fn set_write_steady(scl: &mut Scalar1D, write_file: String) {
+        scl.is_write = true;
+        scl.write_file = write_file;
+        scl.write_step = 0;
     }
 
-    pub fn set_output_transient(scl: &mut Scalar1D, output_file: String, output_step: usize) {
-        scl.is_output = true;
-        scl.output_file = output_file;
-        scl.output_step = output_step;
+    pub fn set_write_transient(scl: &mut Scalar1D, write_file: String, write_step: usize) {
+        scl.is_write = true;
+        scl.write_file = write_file;
+        scl.write_step = write_step;
     }
 
     pub fn update_iter(dom: &Domain1D, scl: &mut Scalar1D, var_all: &Vec<Variable1D>, ts: usize) {
@@ -315,12 +315,12 @@ impl Scalar1D {
 
     pub fn write_steady(dom: &Domain1D, scl: &Scalar1D) {
         // output only if specified
-        if !scl.is_output {
+        if !scl.is_write {
             return;
         }
 
         // write cell data
-        let mut file_cell = File::create(scl.output_file.clone() + "_cell.csv").unwrap();
+        let mut file_cell = File::create(scl.write_file.clone() + "_cell.csv").unwrap();
         writeln!(file_cell, "cid,x,u").unwrap();
         for &cid in dom.cell_id.iter() {
             writeln!(
@@ -332,7 +332,7 @@ impl Scalar1D {
         }
 
         // write face data
-        let mut file_face = File::create(scl.output_file.clone() + "_face.csv").unwrap();
+        let mut file_face = File::create(scl.write_file.clone() + "_face.csv").unwrap();
         writeln!(file_face, "fid,x,u").unwrap();
         for &fid in dom.face_id.iter() {
             writeln!(
@@ -346,13 +346,13 @@ impl Scalar1D {
 
     pub fn write_transient(dom: &Domain1D, scl: &Scalar1D, ts: usize) {
         // output only if specified
-        if !scl.is_output || ts % scl.output_step != 0 {
+        if !scl.is_write || ts % scl.write_step != 0 {
             return;
         }
 
         // write cell data
         let mut file_cell =
-            File::create(scl.output_file.clone() + "_cell_" + &ts.to_string() + ".csv").unwrap();
+            File::create(scl.write_file.clone() + "_cell_" + &ts.to_string() + ".csv").unwrap();
         writeln!(file_cell, "cid,x,u").unwrap();
         for &cid in dom.cell_id.iter() {
             writeln!(
@@ -365,7 +365,7 @@ impl Scalar1D {
 
         // write face data
         let mut file_face =
-            File::create(scl.output_file.clone() + "_face_" + &ts.to_string() + ".csv").unwrap();
+            File::create(scl.write_file.clone() + "_face_" + &ts.to_string() + ".csv").unwrap();
         writeln!(file_face, "fid,x,u").unwrap();
         for &fid in dom.face_id.iter() {
             writeln!(

@@ -5,7 +5,8 @@ fn main() {
     // create mesh
     create_dir_all("examples/output_steady_diff_bndflux").unwrap();
     let mesh = Mesh1D::new(0.0, 1.0, 20).unwrap();
-    
+    mesh.write("examples/output_steady_diff_bndflux/mesh".to_string()).unwrap();
+
     // add domain
     let mut prob = Problem1D::new();
     let dom = prob.add_dom1d(&mesh).unwrap();
@@ -18,7 +19,7 @@ fn main() {
     let r = prob.add_scl1d(dom, 2.0).unwrap();
     let c_l = prob.add_scl0d(dom_l, 1.0).unwrap();
     let n_r = prob.add_scl0d(dom_r, 0.5).unwrap();
-    prob.set_var1d_output_steady(c, "examples/output_steady_diff_bndflux/c".to_string());
+    prob.set_var1d_write_steady(c, "examples/output_steady_diff_bndflux/c".to_string());
 
     // create steady diffusion solver
     let mut solver = SteadyDiff::new();

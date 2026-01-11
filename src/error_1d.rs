@@ -93,4 +93,10 @@ pub enum Error1D {
         file_path: String,
     },
 
+    #[error("{caller}: Failed to write to file: {file_path}.")]
+    FileWriteError {
+        caller: String,
+        file_path: String,
+    },
+
 }

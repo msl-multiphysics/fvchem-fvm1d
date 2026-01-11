@@ -195,28 +195,28 @@ impl Problem1D {
         Ok(var1d_id)
     }
 
-    pub fn set_scl0d_output_steady(&mut self, scl0d_id: usize, output_file: String) {
-        Scalar0D::set_output_steady(&mut self.scl0d[scl0d_id], output_file);
+    pub fn set_scl0d_write_steady(&mut self, scl0d_id: usize, write_file: String) {
+        Scalar0D::set_write_steady(&mut self.scl0d[scl0d_id], write_file);
     }
 
-    pub fn set_scl0d_output_transient(&mut self, scl0d_id: usize, output_file: String, output_step: usize) {
-        Scalar0D::set_output_transient(&mut self.scl0d[scl0d_id], output_file, output_step);
+    pub fn set_scl0d_write_transient(&mut self, scl0d_id: usize, write_file: String, write_step: usize) {
+        Scalar0D::set_write_transient(&mut self.scl0d[scl0d_id], write_file, write_step);
     }
 
-    pub fn set_scl1d_output_steady(&mut self, scl1d_id: usize, output_file: String) {
-        Scalar1D::set_output_steady(&mut self.scl1d[scl1d_id], output_file);
+    pub fn set_scl1d_write_steady(&mut self, scl1d_id: usize, write_file: String) {
+        Scalar1D::set_write_steady(&mut self.scl1d[scl1d_id], write_file);
     }
 
-    pub fn set_scl1d_output_transient(&mut self, scl1d_id: usize, output_file: String, output_step: usize) {
-        Scalar1D::set_output_transient(&mut self.scl1d[scl1d_id], output_file, output_step);
+    pub fn set_scl1d_write_transient(&mut self, scl1d_id: usize, write_file: String, write_step: usize) {
+        Scalar1D::set_write_transient(&mut self.scl1d[scl1d_id], write_file, write_step);
     }
 
-    pub fn set_var1d_output_steady(&mut self, var1d_id: usize, output_file: String) {
-        Variable1D::set_output_steady(&mut self.var1d[var1d_id], output_file);
+    pub fn set_var1d_write_steady(&mut self, var1d_id: usize, write_file: String) {
+        Variable1D::set_write_steady(&mut self.var1d[var1d_id], write_file);
     }
 
-    pub fn set_var1d_output_transient(&mut self, var1d_id: usize, output_file: String, output_step: usize) {
-        Variable1D::set_output_transient(&mut self.var1d[var1d_id], output_file, output_step);
+    pub fn set_var1d_write_transient(&mut self, var1d_id: usize, write_file: String, write_step: usize) {
+        Variable1D::set_write_transient(&mut self.var1d[var1d_id], write_file, write_step);
     }
 
 }

@@ -21,9 +21,9 @@ pub struct Variable1D {
     pub xid: HashMap<i32, usize>,
 
     // output file data
-    pub is_output: bool,
-    pub output_step: usize,
-    pub output_file: String,
+    pub is_write: bool,
+    pub write_step: usize,
+    pub write_file: String,
 }
 
 impl Variable1D {
@@ -59,9 +59,9 @@ impl Variable1D {
         }
 
         // output file data
-        let is_output = false;
-        let output_step = 0;
-        let output_file = String::new();
+        let is_write = false;
+        let write_step = 0;
+        let write_file = String::new();
 
         // return
         Ok(Variable1D {
@@ -72,22 +72,22 @@ impl Variable1D {
             face_value,
             face_value_prev,
             xid,
-            is_output,
-            output_step,
-            output_file,
+            is_write,
+            write_step,
+            write_file,
         })
     }
 
-    pub fn set_output_steady(var: &mut Variable1D, output_file: String) {
-        var.is_output = true;
-        var.output_file = output_file;
-        var.output_step = 0;
+    pub fn set_write_steady(var: &mut Variable1D, write_file: String) {
+        var.is_write = true;
+        var.write_file = write_file;
+        var.write_step = 0;
     }
 
-    pub fn set_output_transient(var: &mut Variable1D, output_file: String, output_step: usize) {
-        var.is_output = true;
-        var.output_file = output_file;
-        var.output_step = output_step;
+    pub fn set_write_transient(var: &mut Variable1D, write_file: String, write_step: usize) {
+        var.is_write = true;
+        var.write_file = write_file;
+        var.write_step = write_step;
     }
 
     pub fn update_prev(var: &mut Variable1D) {
@@ -98,12 +98,12 @@ impl Variable1D {
 
     pub fn write_steady(dom: &Domain1D, var: &Variable1D) {
         // output only if specified
-        if !var.is_output {
+        if !var.is_write {
             return;
         }
 
         // write cell data
-        let mut file_cell = File::create(var.output_file.clone() + "_cell.csv").unwrap();
+        let mut file_cell = File::create(var.write_file.clone() + "_cell.csv").unwrap();
         writeln!(file_cell, "cid,x,u").unwrap();
         for &cid in dom.cell_id.iter() {
             writeln!(
@@ -115,7 +115,7 @@ impl Variable1D {
         }
 
         // write face data
-        let mut file_face = File::create(var.output_file.clone() + "_face.csv").unwrap();
+        let mut file_face = File::create(var.write_file.clone() + "_face.csv").unwrap();
         writeln!(file_face, "fid,x,u").unwrap();
         for &fid in dom.face_id.iter() {
             writeln!(
@@ -129,13 +129,13 @@ impl Variable1D {
 
     pub fn write_transient(dom: &Domain1D, var: &Variable1D, ts: usize) {
         // output only if specified
-        if !var.is_output || ts % var.output_step != 0 {
+        if !var.is_write || ts % var.write_step != 0 {
             return;
         }
 
         // write cell data
         let mut file_cell =
-            File::create(var.output_file.clone() + "_cell_" + &ts.to_string() + ".csv").unwrap();
+            File::create(var.write_file.clone() + "_cell_" + &ts.to_string() + ".csv").unwrap();
         writeln!(file_cell, "cid,x,u").unwrap();
         for &cid in dom.cell_id.iter() {
             writeln!(
@@ -148,7 +148,7 @@ impl Variable1D {
 
         // write face data
         let mut file_face =
-            File::create(var.output_file.clone() + "_face_" + &ts.to_string() + ".csv").unwrap();
+            File::create(var.write_file.clone() + "_face_" + &ts.to_string() + ".csv").unwrap();
         writeln!(file_face, "fid,x,u").unwrap();
         for &fid in dom.face_id.iter() {
             writeln!(

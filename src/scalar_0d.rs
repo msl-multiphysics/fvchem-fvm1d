@@ -14,9 +14,9 @@ pub struct Scalar0D {
     pub face_value_prev: f64,
 
     // output file data
-    pub is_output: bool,
-    pub output_step: usize,
-    pub output_file: String,
+    pub is_write: bool,
+    pub write_step: usize,
+    pub write_file: String,
 
     // non-constant input type
     pub is_constant: bool,
@@ -38,9 +38,9 @@ impl Scalar0D {
         let face_value_prev = value;
 
         // output file data
-        let is_output = false;
-        let output_step = 0;
-        let output_file = String::new();
+        let is_write = false;
+        let write_step = 0;
+        let write_file = String::new();
 
         // set input to constant
         let is_constant = true;
@@ -53,9 +53,9 @@ impl Scalar0D {
             dom0d_id,
             face_value,
             face_value_prev,
-            is_output,
-            output_step,
-            output_file,
+            is_write,
+            write_step,
+            write_file,
             is_constant,
             value_func,
             value_var,
@@ -84,9 +84,9 @@ impl Scalar0D {
         let face_value_prev = face_value;
 
         // output file data
-        let is_output = false;
-        let output_step = 0;
-        let output_file = String::new();
+        let is_write = false;
+        let write_step = 0;
+        let write_file = String::new();
 
         // set input to non-constant
         let is_constant = false;
@@ -97,9 +97,9 @@ impl Scalar0D {
             dom0d_id,
             face_value,
             face_value_prev,
-            is_output,
-            output_step,
-            output_file,
+            is_write,
+            write_step,
+            write_file,
             is_constant,
             value_func,
             value_var,
@@ -138,9 +138,9 @@ impl Scalar0D {
         let face_value_prev = face_value;
 
         // output file data
-        let is_output = false;
-        let output_step = 0;
-        let output_file = String::new();
+        let is_write = false;
+        let write_step = 0;
+        let write_file = String::new();
 
         // set input to constant
         let is_constant = true;
@@ -153,25 +153,25 @@ impl Scalar0D {
             dom0d_id,
             face_value,
             face_value_prev,
-            is_output,
-            output_step,
-            output_file,
+            is_write,
+            write_step,
+            write_file,
             is_constant,
             value_func,
             value_var,
         })
     }
 
-    pub fn set_output_steady(scl: &mut Scalar0D, output_file: String) {
-        scl.is_output = true;
-        scl.output_file = output_file;
-        scl.output_step = 0;
+    pub fn set_write_steady(scl: &mut Scalar0D, write_file: String) {
+        scl.is_write = true;
+        scl.write_file = write_file;
+        scl.write_step = 0;
     }
 
-    pub fn set_output_transient(scl: &mut Scalar0D, output_file: String, output_step: usize) {
-        scl.is_output = true;
-        scl.output_file = output_file;
-        scl.output_step = output_step;
+    pub fn set_write_transient(scl: &mut Scalar0D, write_file: String, write_step: usize) {
+        scl.is_write = true;
+        scl.write_file = write_file;
+        scl.write_step = write_step;
     }
 
     pub fn update_iter(dom: &Domain0D, scl: &mut Scalar0D, var_all: &Vec<Variable1D>, ts: usize) {
@@ -201,25 +201,25 @@ impl Scalar0D {
 
     pub fn write_steady(dom: &Domain0D, scl: &Scalar0D) {
         // output only if specified
-        if !scl.is_output {
+        if !scl.is_write {
             return;
         }
 
         // write face data
-        let mut file_face = File::create(scl.output_file.clone() + "_0d.csv").unwrap();
+        let mut file_face = File::create(scl.write_file.clone() + "_0d.csv").unwrap();
         writeln!(file_face, "fid,x,u").unwrap();
         writeln!(file_face, "{},{:.6},{:.6}", dom.face_id, dom.face_x, scl.face_value).unwrap();
     }
 
     pub fn write_transient(dom: &Domain0D, scl: &Scalar0D, ts: usize) {
         // output only if specified
-        if !scl.is_output || scl.output_step <= 0|| ts % scl.output_step != 0 {
+        if !scl.is_write || scl.write_step <= 0|| ts % scl.write_step != 0 {
             return;
         }
 
         // write face data
         let mut file_face =
-            File::create(scl.output_file.clone() + "_0d_" + &ts.to_string() + ".csv").unwrap();
+            File::create(scl.write_file.clone() + "_0d_" + &ts.to_string() + ".csv").unwrap();
         writeln!(file_face, "fid,x,u").unwrap();
         writeln!(file_face, "{},{:.6},{:.6}", dom.face_id, dom.face_x, scl.face_value).unwrap();
     }
