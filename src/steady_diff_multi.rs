@@ -132,6 +132,9 @@ impl SteadyDiffMulti {
         dom1d_id: usize,
         comp_id: usize,
     ) {
+        // get variable ids
+        let c_id = self.internal_c[&(dom1d_id, comp_id)];
+
         // loop over cells
         for &cid in prob.dom1d[dom1d_id].cell_id.iter() {
             // flux term
@@ -140,11 +143,11 @@ impl SteadyDiffMulti {
                 let nid = prob.dom1d[dom1d_id].cell_cell_id[&cid][loc];
                 if nid >= 0 {
                     // internal face
-                    self.assemble_flux_cn(prob, a_triplet, dom1d_id, comp_id, cid, cid, fid, nid, loc); // discretized equation - store in cell equation
-                    self.assemble_flux_cf(prob, a_triplet, dom1d_id, comp_id, fid, cid, fid, loc); // face interpolation - store in face equation
-                    self.assemble_flux_cf(prob, a_triplet, dom1d_id, comp_id, fid, nid, fid, loc); // face interpolation - store in face equation
+                    self.assemble_flux_cn(prob, a_triplet, dom1d_id, comp_id, c_id, cid, cid, fid, nid, loc); // discretized equation - store in cell equation
+                    self.assemble_flux_cf(prob, a_triplet, dom1d_id, comp_id, c_id, fid, cid, fid, loc); // face interpolation - store in face equation
+                    self.assemble_flux_cf(prob, a_triplet, dom1d_id, comp_id, c_id, fid, nid, fid, loc); // face interpolation - store in face equation
                 } else {
-                    self.assemble_flux_cf(prob, a_triplet, dom1d_id, comp_id, cid, cid, fid, loc); // boundary discretized equation - store in cell equation
+                    self.assemble_flux_cf(prob, a_triplet, dom1d_id, comp_id, c_id, cid, cid, fid, loc); // boundary discretized equation - store in cell equation
                     // face equation handled in boundary and interface conditions
                 }
             }
@@ -159,29 +162,30 @@ impl SteadyDiffMulti {
         prob: &Problem1D,
         a_triplet: &mut Vec<Triplet<usize, usize, f64>>,
         dom1d_id: usize,
-        comp_row: usize,
+        comp_id: usize,
+        var_row: usize,
         row: i32,
         cid: i32,
         fid: i32,
         nid: i32,
         loc: usize,
     ) {
-        // this component (comp_row)
-        let c_row = self.internal_c[&(dom1d_id, comp_row)];
-        let d_row = &self.internal_d[&(dom1d_id, comp_row)];
+        // this component (comp_id)
+        // let c_id = self.internal_c[&(dom1d_id, comp_id)]; -> not needed
+        let d_map = &self.internal_d[&(dom1d_id, comp_id)];
 
-        // diffusion coefficients affecting this component (comp_row)
-        for (&comp_col, &d_rowcol) in d_row.iter() {
+        // diffusion coefficients affecting this component (comp_other)
+        for (&comp_other, &d_id) in d_map.iter() {
             // get variable ids
-            let c_col = self.internal_c[&(dom1d_id, comp_col)];
+            let c_other = self.internal_c[&(dom1d_id, comp_other)];
 
             // get properties
-            let d_f = prob.scl1d[d_rowcol].face_value[&fid];
+            let d_f = prob.scl1d[d_id].face_value[&fid];
             let dist_cn = prob.dom1d[dom1d_id].cell_cell_dist[&cid][loc];
 
             // add to matrix
-            self.add_a(prob, a_triplet, c_row, c_col, row, cid, d_f / dist_cn);
-            self.add_a(prob, a_triplet, c_row, c_col, row, nid, -d_f / dist_cn);
+            self.add_a(prob, a_triplet, var_row, c_other, row, cid,  d_f / dist_cn);
+            self.add_a(prob, a_triplet, var_row, c_other, row, nid, -d_f / dist_cn);
         }
     }
 
@@ -190,28 +194,29 @@ impl SteadyDiffMulti {
         prob: &Problem1D,
         a_triplet: &mut Vec<Triplet<usize, usize, f64>>,
         dom1d_id: usize,
-        comp_row: usize,
+        comp_id: usize,
+        var_row: usize,
         row: i32,
         cid: i32,
         fid: i32,
         loc: usize,
     ) {
         // this component (comp_row)
-        let c_row = self.internal_c[&(dom1d_id, comp_row)];
-        let d_row = &self.internal_d[&(dom1d_id, comp_row)];
+        // let c_id = self.internal_c[&(dom1d_id, comp_id)]; -> not needed
+        let d_map = &self.internal_d[&(dom1d_id, comp_id)];
 
-        // diffusion coefficients affecting this component (comp_row)
-        for (&comp_col, &d_rowcol) in d_row.iter() {
+        // diffusion coefficients affecting this component (comp_other)
+        for (&comp_other, &d_id) in d_map.iter() {
             // get variable ids
-            let c_col = self.internal_c[&(dom1d_id, comp_col)];
+            let c_other = self.internal_c[&(dom1d_id, comp_other)];
 
             // get properties
-            let d_f = prob.scl1d[d_rowcol].face_value[&fid];
+            let d_f = prob.scl1d[d_id].face_value[&fid];
             let dist_cf = prob.dom1d[dom1d_id].cell_face_dist[&cid][loc];
 
             // add to matrix
-            self.add_a(prob, a_triplet, c_row, c_col, row, cid, d_f / dist_cf);
-            self.add_a(prob, a_triplet, c_row, c_col, row, fid, -d_f / dist_cf);
+            self.add_a(prob, a_triplet, var_row, c_other, row, cid, d_f / dist_cf);
+            self.add_a(prob, a_triplet, var_row, c_other, row, fid, -d_f / dist_cf);
         }
     }
 
@@ -278,7 +283,7 @@ impl SteadyDiffMulti {
         let n_f = prob.scl0d[n0d_id].face_value;
 
         // add to rhs
-        self.assemble_flux_cf(prob, a_triplet, dom1d_id, c_id, fid, cid, fid, loc); // flux discretization
+        self.assemble_flux_cf(prob, a_triplet, dom1d_id, comp_id, c_id, fid, cid, fid, loc); // flux discretization
         self.add_b(prob, b_vec, c_id, fid, n_f);
     }
 
@@ -304,7 +309,7 @@ impl SteadyDiffMulti {
         let c_ref = prob.scl0d[c0d_id].face_value;
 
         // add to matrix and rhs
-        self.assemble_flux_cf(prob, a_triplet, dom1d_id, c_id, fid, cid, fid, loc); // flux discretization
+        self.assemble_flux_cf(prob, a_triplet, dom1d_id, comp_id, c_id, fid, cid, fid, loc); // flux discretization
         self.add_a(prob, a_triplet, c_id, c_id, fid, fid, -k_f);
         self.add_b(prob, b_vec, c_id, fid, -k_f * c_ref);
     }
@@ -336,8 +341,8 @@ impl SteadyDiffMulti {
         self.add_a(prob, a_triplet, c_id_a, c_id_b, fid_a, fid_b, -1.0);
 
         // flux continuity - store in face B
-        self.assemble_flux_cf(prob, a_triplet, dom1d_a, c_id_b, fid_b, cid_a, fid_a, loc_a);
-        self.assemble_flux_cf(prob, a_triplet, dom1d_b, c_id_b, fid_b, cid_b, fid_b, loc_b);
+        self.assemble_flux_cf(prob, a_triplet, dom1d_a, comp_id, c_id_b, fid_b, cid_a, fid_a, loc_a);
+        self.assemble_flux_cf(prob, a_triplet, dom1d_b, comp_id, c_id_b, fid_b, cid_b, fid_b, loc_b);
     }
 
     fn assemble_itrmtrn(
@@ -365,12 +370,12 @@ impl SteadyDiffMulti {
         let k_f = prob.scl0d[k_id].face_value;
 
         // concentration jump - store in face A
-        self.assemble_flux_cf(prob, a_triplet, dom1d_a, c_id_a, fid_a, cid_a, fid_a, loc_a);
+        self.assemble_flux_cf(prob, a_triplet, dom1d_a, comp_id, c_id_a, fid_a, cid_a, fid_a, loc_a);
         self.add_a(prob, a_triplet, c_id_a, c_id_a, fid_a, fid_a, -k_f);
         self.add_a(prob, a_triplet, c_id_a, c_id_b, fid_a, fid_b, k_f);
 
         // flux continuity - store in face B
-        self.assemble_flux_cf(prob, a_triplet, dom1d_a, c_id_b, fid_b, cid_a, fid_a, loc_a);
-        self.assemble_flux_cf(prob, a_triplet, dom1d_b, c_id_b, fid_b, cid_b, fid_b, loc_b);
+        self.assemble_flux_cf(prob, a_triplet, dom1d_a, comp_id, c_id_b, fid_b, cid_a, fid_a, loc_a);
+        self.assemble_flux_cf(prob, a_triplet, dom1d_b, comp_id, c_id_b, fid_b, cid_b, fid_b, loc_b);
     }
 }
