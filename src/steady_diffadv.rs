@@ -1,6 +1,6 @@
-use crate::utils_limiter::{LimiterType, calc_limiter};
 use crate::problem_1d::Problem1D;
 use crate::steady_base::SteadyBase;
+use crate::utils_limiter::{LimiterType, calc_limiter};
 use faer::prelude::Col;
 use faer::sparse::Triplet;
 use std::collections::HashMap;

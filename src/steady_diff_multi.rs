@@ -174,6 +174,9 @@ impl SteadyDiffMulti {
         // let c_id = self.internal_c[&(dom1d_id, comp_id)]; -> not needed
         let d_map = &self.internal_d[&(dom1d_id, comp_id)];
 
+        // get properties
+        let dist_cn = prob.dom1d[dom1d_id].cell_cell_dist[&cid][loc];
+
         // diffusion coefficients affecting this component (comp_other)
         for (&comp_other, &d_id) in d_map.iter() {
             // get variable ids
@@ -181,8 +184,7 @@ impl SteadyDiffMulti {
 
             // get properties
             let d_f = prob.scl1d[d_id].face_value[&fid];
-            let dist_cn = prob.dom1d[dom1d_id].cell_cell_dist[&cid][loc];
-
+            
             // add to matrix
             self.add_a(prob, a_triplet, var_row, c_other, row, cid,  d_f / dist_cn);
             self.add_a(prob, a_triplet, var_row, c_other, row, nid, -d_f / dist_cn);
@@ -205,6 +207,9 @@ impl SteadyDiffMulti {
         // let c_id = self.internal_c[&(dom1d_id, comp_id)]; -> not needed
         let d_map = &self.internal_d[&(dom1d_id, comp_id)];
 
+        // get properties
+        let dist_cf = prob.dom1d[dom1d_id].cell_face_dist[&cid][loc];
+
         // diffusion coefficients affecting this component (comp_other)
         for (&comp_other, &d_id) in d_map.iter() {
             // get variable ids
@@ -212,7 +217,6 @@ impl SteadyDiffMulti {
 
             // get properties
             let d_f = prob.scl1d[d_id].face_value[&fid];
-            let dist_cf = prob.dom1d[dom1d_id].cell_face_dist[&cid][loc];
 
             // add to matrix
             self.add_a(prob, a_triplet, var_row, c_other, row, cid, d_f / dist_cf);
