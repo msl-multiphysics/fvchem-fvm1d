@@ -4,7 +4,9 @@ pub mod steady_diff_multi;
 pub mod steady_diffadv;
 pub mod steady_diffadv_multi;
 pub mod transient_diff;
+pub mod transient_diff_multi;
 pub mod transient_diffadv;
+pub mod transient_diffadv_multi;
 
 // physics re-exports
 pub use crate::steady_diff::*;
@@ -12,7 +14,9 @@ pub use crate::steady_diff_multi::*;
 pub use crate::steady_diffadv::*;
 pub use crate::steady_diffadv_multi::*;
 pub use crate::transient_diff::*;
+pub use crate::transient_diff_multi::*;
 pub use crate::transient_diffadv::*;
+pub use crate::transient_diffadv_multi::*;
 
 // main modules
 pub mod domain_0d;
