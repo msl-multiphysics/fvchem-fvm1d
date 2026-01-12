@@ -98,10 +98,11 @@ impl SteadyDiffAdvMulti {
         }
     }
 
-    pub fn add_domain(&mut self, dom1d: usize, comp_id: usize, conc: usize, diff_coeff: HashMap<usize, usize>, src: usize) {
+    pub fn add_domain(&mut self, dom1d: usize, comp_id: usize, conc: usize, diff_coeff: HashMap<usize, usize>, vel_x: usize, src: usize) {
         self.internal_dom.push((dom1d, comp_id));
         self.internal_c.insert((dom1d, comp_id), conc);
         self.internal_d.insert((dom1d, comp_id), diff_coeff);
+        self.internal_u.insert((dom1d, comp_id), vel_x);
         self.internal_r.insert((dom1d, comp_id), src);
     }
 
