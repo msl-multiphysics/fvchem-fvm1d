@@ -20,7 +20,7 @@ fn main() {
     let c_r = prob.add_scl0d(dom_r, 0.5).unwrap();
     prob.set_var1d_write_transient(c, "examples/output_transient_bndconc/c".to_string(), 20);
     
-    // create steady diffusion solver
+    // create solver
     let mut solver = TransientDiff::new();
     solver.add_domain(dom, c, d, r);
     solver.add_boundary_concentration(dom_l, c_l);

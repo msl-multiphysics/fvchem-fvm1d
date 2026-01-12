@@ -21,7 +21,7 @@ fn r2_func(_ts: usize, _x: f64, vars: Vec<f64>) -> f64 {
 
 fn main() {
     // create mesh
-    create_dir_all("examples/output_steady_bndconc").unwrap();
+    create_dir_all("examples/output_transient_bndconc").unwrap();
     let mesh = Mesh1D::new(0.0, 1.0, 20).unwrap();
 
     // add domain
@@ -32,7 +32,7 @@ fn main() {
 
     // add properties
     let c1 = prob.add_var1d(dom, 1.0).unwrap();
-    let c2 = prob.add_var1d(dom, 1.0).unwrap();
+    let c2 = prob.add_var1d(dom, 2.0).unwrap();
     let d11 = prob.add_scl1d(dom, 1.0).unwrap();
     let d12 = prob.add_scl1d(dom, 0.5).unwrap();
     let d21 = prob.add_scl1d(dom, 0.0).unwrap();
@@ -43,16 +43,16 @@ fn main() {
     let c2_l = prob.add_scl0d(dom_l, 0.5).unwrap();
     let c1_r = prob.add_scl0d(dom_r, 2.0).unwrap();
     let c2_r = prob.add_scl0d(dom_r, 1.0).unwrap();
-    prob.set_var1d_write_steady(c1, "examples/output_steady_bndconc/c1".to_string());
-    prob.set_var1d_write_steady(c2, "examples/output_steady_bndconc/c2".to_string());
+    prob.set_var1d_write_transient(c1, "examples/output_transient_bndconc/c1".to_string(), 20);
+    prob.set_var1d_write_transient(c2, "examples/output_transient_bndconc/c2".to_string(), 20);
 
     // create solver
-    let mut solver = SteadyDiffMulti::new(2);
+    let mut solver = TransientDiffMulti::new(2);
     solver.add_domain(dom, 0, c1, [(0, d11), (1, d12)].iter().cloned().collect(), r1);
     solver.add_domain(dom, 1, c2, [(0, d21), (1, d22)].iter().cloned().collect(), r2);
     solver.add_boundary_concentration(dom_l, 0, c1_l);
     solver.add_boundary_concentration(dom_l, 1, c2_l);
     solver.add_boundary_concentration(dom_r, 0, c1_r);
     solver.add_boundary_concentration(dom_r, 1, c2_r);
-    solver.solve(&mut prob, 1000, 1e-6, 0.5).unwrap();
+    solver.solve(&mut prob, 0.001, 101, 1000, 1e-6, 0.5).unwrap();
 }

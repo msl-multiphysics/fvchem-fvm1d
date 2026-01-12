@@ -26,7 +26,7 @@ fn main() {
     let c_r = prob.add_scl0d(dom_r, 1.0).unwrap();
     prob.set_var1d_write_steady(c, "examples/output_scl0d_function/c".to_string());
 
-    // create steady diffusion solver
+    // create solver
     let mut solver = SteadyDiff::new();
     solver.add_domain(dom, c, d, r);
     solver.add_boundary_flux(dom_l, n_l);

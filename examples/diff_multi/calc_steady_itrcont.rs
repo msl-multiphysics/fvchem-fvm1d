@@ -67,7 +67,7 @@ fn main() {
     prob.set_var1d_write_steady(c1_b, "examples/output_steady_itrcont/c1_b".to_string());
     prob.set_var1d_write_steady(c2_b, "examples/output_steady_itrcont/c2_b".to_string());
 
-    // create steady diffusion solver
+    // create solver
     let mut solver = SteadyDiffMulti::new(2);
     solver.add_domain(dom_a, 0, c1_a, [(0, d11_a), (1, d12_a)].iter().cloned().collect(), r1_a);
     solver.add_domain(dom_a, 1, c2_a, [(0, d21_a), (1, d22_a)].iter().cloned().collect(), r2_a);

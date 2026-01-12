@@ -28,7 +28,7 @@ fn main() {
     prob.set_var1d_write_steady(c1, "examples/output_steady_bndconc/c1".to_string());
     prob.set_var1d_write_steady(c2, "examples/output_steady_bndconc/c2".to_string());
 
-    // create steady diffusion solver
+    // create solver
     let mut solver = SteadyDiffAdvMulti::new(2, LimiterType::Linear);
     solver.add_domain(dom, 0, c1, [(0, d11)].iter().cloned().collect(), u1, r1);
     solver.add_domain(dom, 1, c2, [(1, d22)].iter().cloned().collect(), u2, r2);
