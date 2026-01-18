@@ -2,7 +2,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 #[non_exhaustive]
-pub enum Error1D {
+pub enum FVChemError {
 
     #[error("{caller}: Cell ID {cid} not found in {parent}.")]
     InvalidCellID {

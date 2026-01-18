@@ -1,6 +1,6 @@
 use crate::domain_0d::Domain0D;
 use crate::utils_csv::{read_csv, write_csv};
-use crate::utils_error::Error1D;
+use crate::utils_error::FVChemError;
 use crate::variable_1d::Variable1D;
 
 pub struct Scalar0D {
@@ -23,12 +23,29 @@ pub struct Scalar0D {
     pub value_var: Vec<usize>,
 }
 
+impl Default for Scalar0D {
+    fn default() -> Self {
+        Scalar0D {
+            scl0d_id: 0,
+            dom0d_id: 0,
+            face_value: 0.0,
+            face_value_prev: 0.0,
+            is_write: false,
+            write_step: 0,
+            write_file: String::new(),
+            is_constant: true,
+            value_func: |_, _, _| 0.0,
+            value_var: Vec::new(),
+        }
+    }
+}
+
 impl Scalar0D {
     pub fn new(
         scl0d_id: usize,
         dom0d: &Domain0D,
         value: f64,
-    ) -> Result<Scalar0D, Error1D> {
+    ) -> Result<Scalar0D, FVChemError> {
         // get struct ids
         let dom0d_id = dom0d.dom0d_id;
 
@@ -67,7 +84,7 @@ impl Scalar0D {
         var1d_all: &Vec<Variable1D>,
         value_func: fn(usize, f64, Vec<f64>) -> f64,
         value_var: Vec<usize>,
-    ) -> Result<Scalar0D, Error1D> {
+    ) -> Result<Scalar0D, FVChemError> {
         // get struct ids
         let dom0d_id = dom0d.dom0d_id;
 
@@ -109,7 +126,7 @@ impl Scalar0D {
         scl0d_id: usize,
         dom0d: &Domain0D,
         value_file: String,
-    ) -> Result<Scalar0D, Error1D> {
+    ) -> Result<Scalar0D, FVChemError> {
         // get struct ids
         let dom0d_id = dom0d.dom0d_id;
 
@@ -185,7 +202,7 @@ impl Scalar0D {
         scl.face_value_prev = scl.face_value;
     }
 
-    pub fn write_steady(dom: &Domain0D, scl: &Scalar0D) -> Result<(), Error1D> {
+    pub fn write_steady(dom: &Domain0D, scl: &Scalar0D) -> Result<(), FVChemError> {
         // output only if specified
         if !scl.is_write {
             return Ok(());
@@ -208,7 +225,7 @@ impl Scalar0D {
         Ok(())
     }
 
-    pub fn write_transient(dom: &Domain0D, scl: &Scalar0D, ts: usize) -> Result<(), Error1D> {
+    pub fn write_transient(dom: &Domain0D, scl: &Scalar0D, ts: usize) -> Result<(), FVChemError> {
         // output only if specified
         if !scl.is_write || scl.write_step <= 0|| ts % scl.write_step != 0 {
             return Ok(());

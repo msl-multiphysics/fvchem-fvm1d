@@ -1,7 +1,8 @@
-use crate::utils_error::Error1D;
+use crate::utils_error::FVChemError;
 use crate::mesh_1d::Mesh1D;
 use std::collections::{HashMap, HashSet};
 
+#[derive(Default)]
 pub struct Domain1D {
     // struct ids
     pub dom1d_id: usize,
@@ -32,7 +33,7 @@ pub struct Domain1D {
 }
 
 impl Domain1D {
-    pub fn new(dom1d_id: usize, mesh: &Mesh1D, reg_id: usize) -> Result<Domain1D, Error1D> {        
+    pub fn new(dom1d_id: usize, mesh: &Mesh1D, reg_id: usize) -> Result<Domain1D, FVChemError> {        
         // cell data
         let mut cell_id = mesh.reg_cell_id[&reg_id].clone();
         let mut cell_x: HashMap<i32, f64> = HashMap::new();

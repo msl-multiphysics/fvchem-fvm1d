@@ -1,4 +1,4 @@
-use crate::utils_error::Error1D;
+use crate::utils_error::FVChemError;
 use crate::problem_1d::Problem1D;
 use crate::scalar_0d::Scalar0D;
 use crate::scalar_1d::Scalar1D;
@@ -49,22 +49,22 @@ pub trait TransientBase {
         max_iter: usize,
         tol_l2: f64,
         damping: f64,
-    ) -> Result<(), Error1D> {
+    ) -> Result<(), FVChemError> {
         let time_start = Instant::now();
         println!("Starting transient solver.");
 
         // error checking
         if dt <= 0.0 {
-            return Err(Error1D::InvalidTimeStep {caller: "Problem1D".to_string(), dt})
+            return Err(FVChemError::InvalidTimeStep {caller: "Problem1D".to_string(), dt})
         }
         if num_ts < 1 {
-            return Err(Error1D::InvalidNumTimeSteps {caller: "Problem1D".to_string(), num_ts})
+            return Err(FVChemError::InvalidNumTimeSteps {caller: "Problem1D".to_string(), num_ts})
         }
         if max_iter < 2 {
-            return Err(Error1D::InvalidMaxIter {caller: "Problem1D".to_string(), max_iter})
+            return Err(FVChemError::InvalidMaxIter {caller: "Problem1D".to_string(), max_iter})
         }
         if damping <= 0.0 || damping > 1.0 {
-            return Err(Error1D::InvalidDamping {caller: "Problem1D".to_string(), damping})
+            return Err(FVChemError::InvalidDamping {caller: "Problem1D".to_string(), damping})
         }
 
         // initialize time measurement
@@ -112,12 +112,12 @@ pub trait TransientBase {
                 let a_mat = SparseColMat::<usize, f64>::try_new_from_triplets(mat_size, mat_size, &a_triplet);
                 let a_mat = match a_mat {
                     Ok(mat) => mat,
-                    Err(_) => return Err(Error1D::FailedMatrixAssembly {caller: "TransientBase".to_string()}),
+                    Err(_) => return Err(FVChemError::FailedMatrixAssembly {caller: "TransientBase".to_string()}),
                 };
                 let lu = a_mat.sp_lu();
                 let lu = match lu {
                     Ok(decomp) => decomp,
-                    Err(_) => return Err(Error1D::FailedLUDecomposition {caller: "TransientBase".to_string()}),
+                    Err(_) => return Err(FVChemError::FailedLUDecomposition {caller: "TransientBase".to_string()}),
                 };
                 let x_undamp_vec = lu.solve(&b_vec); // undamped solution vector
                 let x_vec = (1.0 - damping) * &x_iter_vec + damping * x_undamp_vec; // damped solution vector
@@ -150,7 +150,7 @@ pub trait TransientBase {
 
             // check convergence
             if iter >= max_iter {
-                return Err(Error1D::FailedConvergence {caller: "TransientBase".to_string(), max_iter})
+                return Err(FVChemError::FailedConvergence {caller: "TransientBase".to_string(), max_iter})
             }
 
             let time_2 = Instant::now();
@@ -271,7 +271,7 @@ pub trait TransientBase {
         }
     }
 
-    fn write_scalar_variable(&self, prob: &mut Problem1D, ts: usize) -> Result<(), Error1D> {
+    fn write_scalar_variable(&self, prob: &mut Problem1D, ts: usize) -> Result<(), FVChemError> {
         // write scalars and variables
         for scl0d in &prob.scl0d {
             Scalar0D::write_transient(&prob.dom0d[scl0d.dom0d_id], scl0d, ts)?;

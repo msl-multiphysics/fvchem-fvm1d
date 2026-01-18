@@ -1,11 +1,12 @@
 use crate::domain_0d::Domain0D;
 use crate::domain_1d::Domain1D;
-use crate::utils_error::Error1D;
+use crate::utils_error::FVChemError;
 use crate::mesh_1d::Mesh1D;
 use crate::scalar_0d::Scalar0D;
 use crate::scalar_1d::Scalar1D;
 use crate::variable_1d::Variable1D;
 
+#[derive(Default)]
 pub struct Problem1D {
     pub dom0d: Vec<Domain0D>,
     pub dom1d: Vec<Domain1D>,
@@ -25,7 +26,7 @@ impl Problem1D {
         }
     }
 
-    pub fn add_dom0d(&mut self, mesh: &Mesh1D, dom1d_id: usize, bnd_id: usize) -> Result<usize, Error1D> {
+    pub fn add_dom0d(&mut self, mesh: &Mesh1D, dom1d_id: usize, bnd_id: usize) -> Result<usize, FVChemError> {
         // get dom0d_id
         let dom0d_id = self.dom0d.len();
 
@@ -38,7 +39,7 @@ impl Problem1D {
         Ok(dom0d_id)
     }
 
-    pub fn add_dom1d(&mut self, mesh: &Mesh1D, reg_id: usize) -> Result<usize, Error1D> {
+    pub fn add_dom1d(&mut self, mesh: &Mesh1D, reg_id: usize) -> Result<usize, FVChemError> {
         // get dom1d_id
         let dom1d_id = self.dom1d.len();
 
@@ -54,7 +55,7 @@ impl Problem1D {
         &mut self,
         dom0d_id: usize,
         value: f64
-    ) -> Result<usize, Error1D> {
+    ) -> Result<usize, FVChemError> {
         // get scl0d_id
         let scl0d_id = self.scl0d.len();
 
@@ -72,7 +73,7 @@ impl Problem1D {
         dom0d_id: usize,
         value_func: fn(usize, f64, Vec<f64>) -> f64,
         value_var: Vec<usize>,
-    ) -> Result<usize, Error1D> {
+    ) -> Result<usize, FVChemError> {
         // get scl0d_id
         let scl0d_id = self.scl0d.len();
 
@@ -95,7 +96,7 @@ impl Problem1D {
         &mut self,
         dom0d_id: usize,
         value_file: String,
-    ) -> Result<usize, Error1D> {
+    ) -> Result<usize, FVChemError> {
         // get scl0d_id
         let scl0d_id = self.scl0d.len();
 
@@ -112,7 +113,7 @@ impl Problem1D {
         &mut self,
         dom1d_id: usize,
         value: f64,
-    ) -> Result<usize, Error1D> {
+    ) -> Result<usize, FVChemError> {
         // get scl1d_id
         let scl1d_id = self.scl1d.len();
 
@@ -130,7 +131,7 @@ impl Problem1D {
         dom1d_id: usize,
         value_func: fn(usize, f64, Vec<f64>) -> f64,
         value_var: Vec<usize>,
-    ) -> Result<usize, Error1D> {
+    ) -> Result<usize, FVChemError> {
         // get scl1d_id
         let scl1d_id = self.scl1d.len();
 
@@ -153,7 +154,7 @@ impl Problem1D {
         &mut self,
         dom1d_id: usize,
         value_file: String,
-    ) -> Result<usize, Error1D> {
+    ) -> Result<usize, FVChemError> {
         // get scl1d_id
         let scl1d_id = self.scl1d.len();
         
@@ -170,7 +171,7 @@ impl Problem1D {
         &mut self,
         dom1d_id: usize,
         value_init: f64,
-    ) -> Result<usize, Error1D> {
+    ) -> Result<usize, FVChemError> {
         // get var1d_id
         let var1d_id = self.var1d.len();
 

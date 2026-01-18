@@ -33,6 +33,31 @@ pub struct SteadyDiffAdv {
     pub limiter_type: LimiterType,
 }
 
+impl Default for SteadyDiffAdv {
+    fn default() -> Self {
+        SteadyDiffAdv {
+            internal_dom: Vec::new(),
+            internal_c: HashMap::new(),
+            internal_d: HashMap::new(),
+            internal_u: HashMap::new(),
+            internal_r: HashMap::new(),
+            bndconc_dom: Vec::new(),
+            bndconc_c: HashMap::new(),
+            bndflux_dom: Vec::new(),
+            bndflux_n: HashMap::new(),
+            bndnadv_dom: Vec::new(),
+            bndnadv_n: HashMap::new(),
+            bndmtrn_dom: Vec::new(),
+            bndmtrn_k: HashMap::new(),
+            bndmtrn_c: HashMap::new(),
+            itrcont_dom: Vec::new(),
+            itrmtrn_dom: Vec::new(),
+            itrmtrn_k: HashMap::new(),
+            limiter_type: LimiterType::Linear,
+        }
+    }
+}
+
 impl SteadyBase for SteadyDiffAdv {
     fn assemble_matrix(
         &self,

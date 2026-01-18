@@ -1,6 +1,6 @@
 use crate::domain_1d::Domain1D;
 use crate::utils_csv::{read_csv, write_csv};
-use crate::utils_error::Error1D;
+use crate::utils_error::FVChemError;
 use crate::variable_1d::Variable1D;
 use std::collections::HashMap;
 
@@ -28,12 +28,31 @@ pub struct Scalar1D {
     pub value_var: Vec<usize>,
 }
 
+impl Default for Scalar1D {
+    fn default() -> Self {
+        Scalar1D {
+            scl1d_id: 0,
+            dom1d_id: 0,
+            cell_value: HashMap::new(),
+            cell_value_prev: HashMap::new(),
+            face_value: HashMap::new(),
+            face_value_prev: HashMap::new(),
+            is_write: false,
+            write_step: 0,
+            write_file: String::new(),
+            is_constant: true,
+            value_func: |_, _, _| 0.0,
+            value_var: Vec::new(),
+        }
+    }
+}
+
 impl Scalar1D {
     pub fn new(
         scl1d_id: usize,
         dom1d: &Domain1D,
         value: f64,
-    ) -> Result<Scalar1D, Error1D> {
+    ) -> Result<Scalar1D, FVChemError> {
         // get struct ids
         let dom1d_id = dom1d.dom1d_id;
 
@@ -84,7 +103,7 @@ impl Scalar1D {
         var1d_all: &Vec<Variable1D>,
         value_func: fn(usize, f64, Vec<f64>) -> f64,
         value_var: Vec<usize>,
-    ) -> Result<Scalar1D, Error1D> {
+    ) -> Result<Scalar1D, FVChemError> {
         // get struct ids
         let dom1d_id = dom1d.dom1d_id;
 
@@ -151,7 +170,7 @@ impl Scalar1D {
         scl1d_id: usize,
         dom1d: &Domain1D,
         value_file: String,
-    ) -> Result<Scalar1D, Error1D> {
+    ) -> Result<Scalar1D, FVChemError> {
         // get struct ids
         let dom1d_id = dom1d.dom1d_id;
 
@@ -272,7 +291,7 @@ impl Scalar1D {
         scl.face_value_prev = scl.face_value.clone();
     }
 
-    pub fn write_steady(dom: &Domain1D, scl: &Scalar1D) -> Result<(), Error1D> {
+    pub fn write_steady(dom: &Domain1D, scl: &Scalar1D) -> Result<(), FVChemError> {
         // output only if specified
         if !scl.is_write {
             return Ok(());
@@ -315,7 +334,7 @@ impl Scalar1D {
 
     }
 
-    pub fn write_transient(dom: &Domain1D, scl: &Scalar1D, ts: usize) -> Result<(), Error1D> {
+    pub fn write_transient(dom: &Domain1D, scl: &Scalar1D, ts: usize) -> Result<(), FVChemError> {
         // output only if specified
         if !scl.is_write || ts % scl.write_step != 0 {
             return Ok(());

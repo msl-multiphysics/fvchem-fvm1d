@@ -1,8 +1,9 @@
 use crate::utils_csv::{read_csv, write_csv};
-use crate::utils_error::Error1D;
+use crate::utils_error::FVChemError;
 use std::collections::{HashMap, HashSet};
 use std::vec;
 
+#[derive(Default)]
 pub struct Mesh1D {
     // cell data
     pub num_cell: usize,
@@ -41,17 +42,17 @@ pub struct Mesh1D {
 }
 
 impl Mesh1D {
-    pub fn new(x_min: f64, x_max: f64, num_cell: usize) -> Result<Mesh1D, Error1D> {
+    pub fn new(x_min: f64, x_max: f64, num_cell: usize) -> Result<Mesh1D, FVChemError> {
         // error checking
         if x_max <= x_min {
-            return Err(Error1D::InvalidBoundsX {
+            return Err(FVChemError::InvalidBoundsX {
                 caller: "Mesh1D".to_string(),
                 x_min: x_min,
                 x_max: x_max,
             });
         }
         if num_cell < 1 {
-            return Err(Error1D::InvalidCellCount {caller: "Mesh1D".to_string()});
+            return Err(FVChemError::InvalidCellCount {caller: "Mesh1D".to_string()});
         }
 
         // cell data
@@ -170,7 +171,7 @@ impl Mesh1D {
         })
     }
 
-    pub fn new_from_file(mesh_file: String) -> Result<Mesh1D, Error1D> {
+    pub fn new_from_file(mesh_file: String) -> Result<Mesh1D, FVChemError> {
         // read cell data
         let (num_cell, cell_i32, cell_f64) = read_csv(
             mesh_file.clone() + "_cell.csv",
@@ -335,7 +336,7 @@ impl Mesh1D {
         })
     }
 
-    pub fn write(&self, write_file: String) -> Result<(), Error1D> {
+    pub fn write(&self, write_file: String) -> Result<(), FVChemError> {
         // write cell data
         let mut cell_x_vec: Vec<f64> = Vec::new();
         let mut cell_dx_vec: Vec<f64> = Vec::new();

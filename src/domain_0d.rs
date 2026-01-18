@@ -1,7 +1,8 @@
 use crate::domain_1d::Domain1D;
 use crate::mesh_1d::Mesh1D;
-use crate::utils_error::Error1D;
+use crate::utils_error::FVChemError;
 
+#[derive(Default)]
 pub struct Domain0D {
     // struct ids
     pub dom0d_id: usize,
@@ -17,7 +18,7 @@ pub struct Domain0D {
 }
 
 impl Domain0D {
-    pub fn new(dom0d_id: usize, mesh: &Mesh1D, dom1d: &Domain1D, bnd_id: usize) -> Result<Domain0D, Error1D> {
+    pub fn new(dom0d_id: usize, mesh: &Mesh1D, dom1d: &Domain1D, bnd_id: usize) -> Result<Domain0D, FVChemError> {
         // get struct ids
         let dom1d_id = dom1d.dom1d_id;
 

@@ -1,8 +1,8 @@
-use crate::utils_error::Error1D;
+use crate::utils_error::FVChemError;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 
-pub fn write_csv(file_path: String, caller: String, header: Vec<String>, is_i32: Vec<bool>, data_i32: Vec<&Vec<i32>>, data_f64: Vec<&Vec<f64>>) -> Result<(), Error1D>
+pub fn write_csv(file_path: String, caller: String, header: Vec<String>, is_i32: Vec<bool>, data_i32: Vec<&Vec<i32>>, data_f64: Vec<&Vec<f64>>) -> Result<(), FVChemError>
 {
     // assume all columns have same number of rows
     // assume that is_i32 length matches data_i32 and data_f64 lengths
@@ -12,14 +12,14 @@ pub fn write_csv(file_path: String, caller: String, header: Vec<String>, is_i32:
     let mut file = match File::create(&file_path) {
         Ok(f) => f,
         Err(_) => {
-            return Err(Error1D::FileWriteError {caller, file_path});
+            return Err(FVChemError::FileWriteError {caller, file_path});
         }
     };
 
     // write header
     let line_header = writeln!(file, "{}", header.join(","));
     if line_header.is_err() {
-        return Err(Error1D::FileWriteError {caller, file_path});
+        return Err(FVChemError::FileWriteError {caller, file_path});
     }
 
     // get number of rows and columns
@@ -56,7 +56,7 @@ pub fn write_csv(file_path: String, caller: String, header: Vec<String>, is_i32:
         // write line
         let line = writeln!(file, "{}", parts.join(","));
         if line.is_err() {
-            return Err(Error1D::FileWriteError {caller: caller.clone(), file_path: file_path.clone()});
+            return Err(FVChemError::FileWriteError {caller: caller.clone(), file_path: file_path.clone()});
         }
     }
 
@@ -65,14 +65,14 @@ pub fn write_csv(file_path: String, caller: String, header: Vec<String>, is_i32:
 
 }
 
-pub fn read_csv(file_path: String, caller: String, header: Vec<String>, is_i32: Vec<bool>) -> Result<(usize, Vec<Vec<i32>>, Vec<Vec<f64>>), Error1D>
+pub fn read_csv(file_path: String, caller: String, header: Vec<String>, is_i32: Vec<bool>) -> Result<(usize, Vec<Vec<i32>>, Vec<Vec<f64>>), FVChemError>
 {
     // read file
     let file = File::open(&file_path);
     let file = match file {
         Ok(f) => f,
         Err(_) => {
-            return Err(Error1D::FileReadError {caller, file_path});
+            return Err(FVChemError::FileReadError {caller, file_path});
         }
     };
     let reader = BufReader::new(file);
@@ -82,11 +82,11 @@ pub fn read_csv(file_path: String, caller: String, header: Vec<String>, is_i32: 
     let line_header = match lines.next() {
         Some(Ok(l)) => l,
         _ => {
-            return Err(Error1D::FileReadError {caller, file_path});
+            return Err(FVChemError::FileReadError {caller, file_path});
         }
     };
     if line_header.trim() != header.join(",").trim() {
-        return Err(Error1D::InvalidFileHeader {caller, file_path});
+        return Err(FVChemError::InvalidFileHeader {caller, file_path});
     }
 
     // initialize data storage
@@ -109,7 +109,7 @@ pub fn read_csv(file_path: String, caller: String, header: Vec<String>, is_i32: 
         let line = match line {
             Ok(l) => l,
             Err(_) => {
-                return Err(Error1D::FileReadError {caller: caller.clone(), file_path: file_path.clone()});
+                return Err(FVChemError::FileReadError {caller: caller.clone(), file_path: file_path.clone()});
             }
         };
         let parts: Vec<&str> = line.split(',').collect();
@@ -124,7 +124,7 @@ pub fn read_csv(file_path: String, caller: String, header: Vec<String>, is_i32: 
                 let val: i32 = match parts[j].trim().parse() {
                     Ok(v) => v,
                     Err(_) => {
-                        return Err(Error1D::FileReadError {caller: caller.clone(), file_path: file_path.clone()});
+                        return Err(FVChemError::FileReadError {caller: caller.clone(), file_path: file_path.clone()});
                     }
                 };
                 data_i32[idx_i32].push(val);
@@ -133,7 +133,7 @@ pub fn read_csv(file_path: String, caller: String, header: Vec<String>, is_i32: 
                 let val: f64 = match parts[j].trim().parse() {
                     Ok(v) => v,
                     Err(_) => {
-                        return Err(Error1D::FileReadError {caller: caller.clone(), file_path: file_path.clone()});
+                        return Err(FVChemError::FileReadError {caller: caller.clone(), file_path: file_path.clone()});
                     }
                 };
                 data_f64[idx_f64].push(val);

@@ -1,8 +1,9 @@
 use crate::domain_1d::Domain1D;
 use crate::utils_csv::write_csv;
-use crate::utils_error::Error1D;
+use crate::utils_error::FVChemError;
 use std::collections::HashMap;
 
+#[derive(Default)]
 pub struct Variable1D {
     // struct ids
     pub var1d_id: usize,
@@ -30,7 +31,7 @@ impl Variable1D {
         var1d_id: usize,
         dom1d: &Domain1D,
         value_init: f64,
-    ) -> Result<Variable1D, Error1D> {
+    ) -> Result<Variable1D, FVChemError> {
         // get struct ids
         let dom1d_id = dom1d.dom1d_id;
 
@@ -95,7 +96,7 @@ impl Variable1D {
         var.face_value_prev = var.face_value.clone();
     }
 
-    pub fn write_steady(dom: &Domain1D, var: &Variable1D) -> Result<(), Error1D> {
+    pub fn write_steady(dom: &Domain1D, var: &Variable1D) -> Result<(), FVChemError> {
         // output only if specified
         if !var.is_write {
             return Ok(());
@@ -137,7 +138,7 @@ impl Variable1D {
         Ok(())
     }
 
-    pub fn write_transient(dom: &Domain1D, var: &Variable1D, ts: usize) -> Result<(), Error1D> {
+    pub fn write_transient(dom: &Domain1D, var: &Variable1D, ts: usize) -> Result<(), FVChemError> {
         // output only if specified
         if !var.is_write || ts % var.write_step != 0 {
             return Ok(());
