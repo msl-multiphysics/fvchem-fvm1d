@@ -2,22 +2,22 @@ use crate::problem_1d::Problem1D;
 use crate::utils_error::FVChemError;
 use crate::utils_limiter::LimiterType;
 
-use crate::SteadyBase;
-use crate::SteadyDiff;
-use crate::SteadyDiffAdv;
-use crate::SteadyDiffMulti;
-use crate::SteadyDiffAdvMulti;
+use crate::TransientBase;
+use crate::TransientDiff;
+use crate::TransientDiffAdv;
+use crate::TransientDiffMulti;
+use crate::TransientDiffAdvMulti;
 
-pub enum SteadyPhysics {
-    Diff(SteadyDiff),
-    DiffAdv(SteadyDiffAdv),
-    DiffMulti(SteadyDiffMulti),
-    DiffAdvMulti(SteadyDiffAdvMulti),
+pub enum TransientPhysics {
+    Diff(TransientDiff),
+    DiffAdv(TransientDiffAdv),
+    DiffMulti(TransientDiffMulti),
+    DiffAdvMulti(TransientDiffAdvMulti),
 }
 
-pub fn parse_steady_physics(
+pub fn parse_transient_physics(
     parts: &Vec<String>,
-    phys_steady: &mut Option<SteadyPhysics>,
+    phys_transient: &mut Option<TransientPhysics>,
     phys_type: &String,
     line_num: usize,
 ) -> Result<(), FVChemError> {
@@ -25,11 +25,11 @@ pub fn parse_steady_physics(
     // initialize physics struct
     match phys_type.as_str() {
         "diff" => {
-            *phys_steady = Some(SteadyPhysics::Diff(SteadyDiff::new()));
+            *phys_transient = Some(TransientPhysics::Diff(TransientDiff::new()));
         },
         "diff_multi" => {
             let num_comp = parts.get(2).expect(format!("Line {}: physics diff_multi requires 'physics diff_multi <num_comp>'. Could not find num_comp.", line_num).as_str()).parse().expect(format!("Line {}: Could not parse num_comp into a number.", line_num).as_str());
-            *phys_steady = Some(SteadyPhysics::DiffMulti(SteadyDiffMulti::new(num_comp)));
+            *phys_transient = Some(TransientPhysics::DiffMulti(TransientDiffMulti::new(num_comp)));
         },
         "diffadv" => {
             // get input
@@ -47,7 +47,7 @@ pub fn parse_steady_physics(
             };
             
             // set physics
-            *phys_steady = Some(SteadyPhysics::DiffAdv(SteadyDiffAdv::new(limit_type)));
+            *phys_transient = Some(TransientPhysics::DiffAdv(TransientDiffAdv::new(limit_type)));
         },
         "diffadv_multi" => {
             // get input
@@ -66,10 +66,10 @@ pub fn parse_steady_physics(
             };
 
             // set physics
-            *phys_steady = Some(SteadyPhysics::DiffAdvMulti(SteadyDiffAdvMulti::new(num_comp, limit_type)));
+            *phys_transient = Some(TransientPhysics::DiffAdvMulti(TransientDiffAdvMulti::new(num_comp, limit_type)));
         },
         _ => {
-            panic!("Steady physics type '{}' not recognized.", phys_type);
+            panic!("Transient physics type '{}' not recognized.", phys_type);
         },
     }
 
@@ -78,30 +78,32 @@ pub fn parse_steady_physics(
 
 }
 
-pub fn parse_steady_solver(
+pub fn parse_transient_solver(
     prob: &mut Problem1D,
-    phys_steady: &mut Option<SteadyPhysics>,
+    phys_transient: &mut Option<TransientPhysics>,
+    dt: f64,
+    num_step: usize,
     max_iter: usize,
     tol_l2: f64,
     damping: f64,
 ) -> Result<(), FVChemError> {
 
     // set solver parameters
-    match phys_steady {
-        Some(SteadyPhysics::Diff(phys)) => {
-            phys.solve(prob, max_iter, tol_l2, damping)?;
+    match phys_transient {
+        Some(TransientPhysics::Diff(phys)) => {
+            phys.solve(prob, dt, num_step, max_iter, tol_l2, damping)?;
         },
-        Some(SteadyPhysics::DiffAdv(phys)) => {
-            phys.solve(prob, max_iter, tol_l2, damping)?;
+        Some(TransientPhysics::DiffAdv(phys)) => {
+            phys.solve(prob, dt, num_step, max_iter, tol_l2, damping)?;
         },
-        Some(SteadyPhysics::DiffMulti(phys)) => {
-            phys.solve(prob, max_iter, tol_l2, damping)?;
+        Some(TransientPhysics::DiffMulti(phys)) => {
+            phys.solve(prob, dt, num_step, max_iter, tol_l2, damping)?;
         },
-        Some(SteadyPhysics::DiffAdvMulti(phys)) => {
-            phys.solve(prob, max_iter, tol_l2, damping)?;
+        Some(TransientPhysics::DiffAdvMulti(phys)) => {
+            phys.solve(prob, dt, num_step, max_iter, tol_l2, damping)?;
         },
         _ => {
-            panic!("Steady physics type not recognized.");
+            panic!("Transient physics type not recognized.");
         },
     }
 
@@ -110,9 +112,9 @@ pub fn parse_steady_solver(
 
 }
 
-pub fn parse_steady_condition(
+pub fn parse_transient_condition(
     parts: &Vec<String>,
-    phys_steady: &mut Option<SteadyPhysics>,
+    phys_transient: &mut Option<TransientPhysics>,
     dom0d_map: &std::collections::HashMap<String, usize>,
     dom1d_map: &std::collections::HashMap<String, usize>,
     scl0d_map: &std::collections::HashMap<String, usize>,
@@ -122,21 +124,21 @@ pub fn parse_steady_condition(
 ) -> Result<(), FVChemError> {
 
     // parse dependending on physics type
-    match phys_steady {
-        Some(SteadyPhysics::Diff(phys)) => {
+    match phys_transient {
+        Some(TransientPhysics::Diff(phys)) => {
             parse_diff(parts, phys, dom0d_map, dom1d_map, scl0d_map, scl1d_map, var1d_map, line_num)?;
         },
-        Some(SteadyPhysics::DiffAdv(phys)) => {
+        Some(TransientPhysics::DiffAdv(phys)) => {
             parse_diffadv(parts, phys, dom0d_map, dom1d_map, scl0d_map, scl1d_map, var1d_map, line_num)?;
         },
-//        Some(SteadyPhysics::DiffMulti(phys)) => {
+//        Some(TransientPhysics::DiffMulti(phys)) => {
 //            parse_diff_multi(parts, phys, dom0d_map, dom1d_map, scl0d_map, scl1d_map, var1d_map, line_num)?;
 //        },
-//        Some(SteadyPhysics::DiffAdvMulti(phys)) => {
+//        Some(TransientPhysics::DiffAdvMulti(phys)) => {
 //            parse_diffadv_multi(parts, phys, dom0d_map, dom1d_map, scl0d_map, scl1d_map, var1d_map, line_num)?;
 //        },
         _ => {
-            panic!("Line {}: Steady physics type not recognized.", line_num);
+            panic!("Line {}: Transient physics type not recognized.", line_num);
         },
     }
 
@@ -147,7 +149,7 @@ pub fn parse_steady_condition(
 
 fn parse_diff(
     parts: &Vec<String>,
-    phys: &mut SteadyDiff,
+    phys: &mut TransientDiff,
     dom0d_map: &std::collections::HashMap<String, usize>,
     dom1d_map: &std::collections::HashMap<String, usize>,
     scl0d_map: &std::collections::HashMap<String, usize>,
@@ -215,8 +217,8 @@ fn parse_diff(
             let itr_type = parts.get(1).expect(format!("Line {}: itr requires 'itr <itr_type> <dom_a> <dom_b> ...'. Could not find itr_type.", line_num).as_str());
             let dom_a_name = parts.get(2).expect(format!("Line {}: itr requires 'itr <itr_type> <dom_a> <dom_b> ...'. Could not find dom_a.", line_num).as_str());
             let dom_b_name = parts.get(3).expect(format!("Line {}: itr requires 'itr <itr_type> <dom_a> <dom_b> ...'. Could not find dom_b.", line_num).as_str());
-            let dom_a_id = *dom0d_map.get(dom_a_name).expect(format!("Line {}: dom0d name '{}' not found.", line_num, dom_a_name).as_str());
-            let dom_b_id = *dom0d_map.get(dom_b_name).expect(format!("Line {}: dom0d name '{}' not found.", line_num, dom_b_name).as_str());
+            let dom_a_id = *dom1d_map.get(dom_a_name).expect(format!("Line {}: dom1d name '{}' not found.", line_num, dom_a_name).as_str());
+            let dom_b_id = *dom1d_map.get(dom_b_name).expect(format!("Line {}: dom1d name '{}' not found.", line_num, dom_b_name).as_str());
 
             // check interface type
             match itr_type.as_str() {
@@ -246,7 +248,7 @@ fn parse_diff(
 
 fn parse_diffadv(
     parts: &Vec<String>,
-    phys: &mut SteadyDiffAdv,
+    phys: &mut TransientDiffAdv,
     dom0d_map: &std::collections::HashMap<String, usize>,
     dom1d_map: &std::collections::HashMap<String, usize>,
     scl0d_map: &std::collections::HashMap<String, usize>,
@@ -318,8 +320,8 @@ fn parse_diffadv(
             let itr_type = parts.get(1).expect(format!("Line {}: itr requires 'itr <itr_type> <dom_a> <dom_b> ...'. Could not find itr_type.", line_num).as_str());
             let dom_a_name = parts.get(2).expect(format!("Line {}: itr requires 'itr <itr_type> <dom_a> <dom_b> ...'. Could not find dom_a.", line_num).as_str());
             let dom_b_name = parts.get(3).expect(format!("Line {}: itr requires 'itr <itr_type> <dom_a> <dom_b> ...'. Could not find dom_b.", line_num).as_str());
-            let dom_a_id = *dom0d_map.get(dom_a_name).expect(format!("Line {}: dom0d name '{}' not found.", line_num, dom_a_name).as_str());
-            let dom_b_id = *dom0d_map.get(dom_b_name).expect(format!("Line {}: dom0d name '{}' not found.", line_num, dom_b_name).as_str());
+            let dom_a_id = *dom1d_map.get(dom_a_name).expect(format!("Line {}: dom1d name '{}' not found.", line_num, dom_a_name).as_str());
+            let dom_b_id = *dom1d_map.get(dom_b_name).expect(format!("Line {}: dom1d name '{}' not found.", line_num, dom_b_name).as_str());
 
             // check interface type
             match itr_type.as_str() {

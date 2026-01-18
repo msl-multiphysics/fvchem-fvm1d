@@ -1,7 +1,8 @@
 use fvchem_fvm1d::*;
+use shell_words;
 use std::collections::HashMap;
 use std::env;
-use std::fs::File;
+use std::fs::{create_dir_all, File};
 use std::io::{BufRead, BufReader};
 
 fn main() -> Result<(), FVChemError> {
@@ -16,8 +17,8 @@ fn main() -> Result<(), FVChemError> {
     let lines = reader.lines();
 
     // initialize physics
-    let mut phys_steady: SteadyPhysics = SteadyPhysics::Diff(SteadyDiff::new());
-    // let mut phys_transient: Option<Box<dyn TransientBase>> = None;
+    let mut phys_steady: Option<SteadyPhysics> = None;
+    let mut phys_transient: Option<TransientPhysics> = None;
     let mut is_simu_defined = false;
     let mut is_phys_defined = false;
     let mut is_phys_steady = false;
@@ -76,8 +77,6 @@ fn main() -> Result<(), FVChemError> {
 
             },
             "mesh" => {
-                
-                // TODO: read mesh from file
 
                 // get inputs
                 let mesh_type = parts.get(1).expect(format!("Line {}: mesh requires 'mesh <mesh_type> [...]'. Could not find mesh_type.", i+1).as_str());
@@ -95,6 +94,16 @@ fn main() -> Result<(), FVChemError> {
                         mesh = Mesh1D::new(x_min, x_max, num_cell)?;
                         is_mesh_defined = true;
                     
+                    },
+                    "file" => {  // mesh based on file
+                        
+                        // get inputs from args
+                        let mesh_file = parts.get(2).expect(format!("Line {}: mesh file requires 'mesh file <mesh_path>'. Could not find mesh_path.", i+1).as_str());
+
+                        // create mesh
+                        mesh = Mesh1D::new_from_file(mesh_file.clone())?;
+                        is_mesh_defined = true;
+
                     },
                     _ => {
                         panic!("Line {}: Unknown mesh_type '{}'.", i+1, mesh_type);
@@ -210,16 +219,36 @@ fn main() -> Result<(), FVChemError> {
 
                 // check optional inputs
                 if is_phys_steady && output_path != "" {  // steady -> no output frequency
+                    
+                    // check output
                     if output_step_str != "" {
                         panic!("Line {}: var1d for steady physics with output requires 'var1d <name> = <dom1d_name> <value_init> <output_path>'. Found additional argument {}", i+1, output_step_str);
                     }
-                    prob.set_var1d_write_steady(var_id, output_path);
+
+                    // set output
+                    prob.set_var1d_write_steady(var_id, output_path.clone());
+
+                    // create output directory
+                    let output_vec = output_path.split('/').collect::<Vec<&str>>();
+                    let output_folder = output_vec[..output_vec.len()-1].join("/");
+                    create_dir_all(&output_folder).expect(format!("Line {}: Could not create output directory '{}'.", i+1, output_folder).as_str());
+
                 } else if !is_phys_steady && output_path != "" {  // transient -> output frequency required
+                    
+                    // check output
                     if output_step_str == "" {
                         panic!("Line {}: var1d for transient physics with output requires 'var1d <name> = <dom1d_name> <value_init> <output_path> <output_step>'. Could not find output_step.", i+1);
                     }
+
+                    // set output
                     let output_step: usize = output_step_str.parse().expect(format!("Line {}: Could not parse output_step into a number.", i+1).as_str());
-                    prob.set_var1d_write_transient(var_id, output_path, output_step);
+                    prob.set_var1d_write_transient(var_id, output_path.clone(), output_step);
+
+                    // create output directory
+                    let output_vec = output_path.split('/').collect::<Vec<&str>>();
+                    let output_folder = output_vec[..output_vec.len()-1].join("/");
+                    create_dir_all(&output_folder).expect(format!("Line {}: Could not create output directory '{}'.", i+1, output_folder).as_str());
+
                 }
 
             },
@@ -333,15 +362,17 @@ fn main() -> Result<(), FVChemError> {
                 phys_type = parts.get(1).expect(format!("Line {}: physics requires 'physics <phys_type>'. Could not find phys_type.", i+1).as_str()).to_string();
 
                 // set physics depending on type
-                parse_steady_physics(&mut phys_steady, &phys_type)?;
-
+                if is_phys_steady {
+                    parse_steady_physics(&parts, &mut phys_steady, &phys_type, i+1)?;
+                } else {
+                    parse_transient_physics(&parts, &mut phys_transient, &phys_type, i+1)?;
+                }
+                
                 // set physics defined flag
                 is_phys_defined = true;
 
             },
             "int" | "bnd" | "itr" => {
-
-                // TODO: implement transient physics
 
                 // check that mesh, simulation type, and physics are defined
                 if !is_mesh_defined{
@@ -358,28 +389,31 @@ fn main() -> Result<(), FVChemError> {
                 if is_phys_steady {
                     parse_steady_condition(&parts, &mut phys_steady, &dom0d_map, &dom1d_map, &scl0d_map, &scl1d_map, &var1d_map, i+1)?;
                 } else {
-                    // parse_transient(&parts, &mut prob, &mut phys_transient, i+1)?;
+                    parse_transient_condition(&parts, &mut phys_transient, &dom0d_map, &dom1d_map, &scl0d_map, &scl1d_map, &var1d_map, i+1)?;
                 }
 
             },
             "solve" => {
 
-                // TODO: implement transient physics
-
                 // solve problem depending on time type
                 if is_phys_steady {
-                    
-
                     // get inputs
-                    let max_iter = parts.get(1).expect(format!("Line {}: solve for steady physics requires 'solve <max_iter> <tolerance> <relaxation>'. Could not find max_iter.", i+1).as_str()).parse().expect(format!("Line {}: Could not parse max_iter into a number.", i+1).as_str());
-                    let tol = parts.get(2).expect(format!("Line {}: solve for steady physics requires 'solve <max_iter> <tolerance> <relaxation>'. Could not find tolerance.", i+1).as_str()).parse().expect(format!("Line {}: Could not parse tolerance into a number.", i+1).as_str());
-                    let damping = parts.get(3).expect(format!("Line {}: solve for steady physics requires 'solve <max_iter> <tolerance> <relaxation>'. Could not find relaxation.", i+1).as_str()).parse().expect(format!("Line {}: Could not parse relaxation into a number.", i+1).as_str());
+                    let max_iter = parts.get(1).expect(format!("Line {}: solve for steady physics requires 'solve <max_iter> <tol> <damping>'. Could not find max_iter.", i+1).as_str()).parse().expect(format!("Line {}: Could not parse max_iter into a number.", i+1).as_str());
+                    let tol = parts.get(2).expect(format!("Line {}: solve for steady physics requires 'solve <max_iter> <tol> <damping>'. Could not find tolerance.", i+1).as_str()).parse().expect(format!("Line {}: Could not parse tol into a number.", i+1).as_str());
+                    let damping = parts.get(3).expect(format!("Line {}: solve for steady physics requires 'solve <max_iter> <tol> <damping>'. Could not find relaxation.", i+1).as_str()).parse().expect(format!("Line {}: Could not parse damping into a number.", i+1).as_str());
 
                     // run solver
                     parse_steady_solver(&mut prob, &mut phys_steady, max_iter, tol, damping)?;
-                    
                 } else {
-                    // placeholder
+                    // get inputs
+                    let dt = parts.get(1).expect(format!("Line {}: solve for transient physics requires 'solve <dt> <num_step> <max_iter> <tol> <damping>'. Could not find dt.", i+1).as_str()).parse().expect(format!("Line {}: Could not parse dt into a number.", i+1).as_str());
+                    let num_step = parts.get(2).expect(format!("Line {}: solve for transient physics requires 'solve <dt> <num_step> <max_iter> <tol> <damping>'. Could not find num_step.", i+1).as_str()).parse().expect(format!("Line {}: Could not parse num_step into a number.", i+1).as_str());
+                    let max_iter = parts.get(3).expect(format!("Line {}: solve for transient physics requires 'solve <dt> <num_step> <max_iter> <tol> <damping>'. Could not find max_iter.", i+1).as_str()).parse().expect(format!("Line {}: Could not parse max_iter into a number.", i+1).as_str());
+                    let tol = parts.get(4).expect(format!("Line {}: solve for transient physics requires 'solve <dt> <num_step> <max_iter> <tol> <damping>'. Could not find tolerance.", i+1).as_str()).parse().expect(format!("Line {}: Could not parse tol into a number.", i+1).as_str());
+                    let damping = parts.get(5).expect(format!("Line {}: solve for transient physics requires 'solve <dt> <num_step> <max_iter> <tol> <damping>'. Could not find relaxation.", i+1).as_str()).parse().expect(format!("Line {}: Could not parse damping into a number.", i+1).as_str());
+                    
+                    // run solver
+                    parse_transient_solver(&mut prob, &mut phys_transient, dt, num_step, max_iter, tol, damping)?;
                 }
 
             },

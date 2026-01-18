@@ -1,0 +1,38 @@
+# set simulation
+simu steady
+
+# initialize mesh
+mesh file "examples/input_mesh_2dom/mesh"
+
+# create domains
+dom1d dom_a = 0
+dom1d dom_b = 1
+dom0d dom_al = dom_a 0
+dom0d dom_ar = dom_a 1
+dom0d dom_bl = dom_b 2
+dom0d dom_br = dom_b 3
+
+# create variables
+var1d c_a = dom_a 1.0 "examples/output_steady_itrcont/ca"
+var1d c_b = dom_b 1.0 "examples/output_steady_itrcont/cb"
+
+# create scalars
+scl1d d_a = dom_a 0.2
+scl1d r_a = dom_a 2.0
+scl1d d_b = dom_b 0.1
+scl1d r_b = dom_b 1.0
+scl0d c_l = dom_al 1.0
+scl0d n_r = dom_br 0.5
+
+# set physics
+physics diff
+
+# set interior and boundary conditions
+int dom_a c_a d_a r_a
+int dom_b c_b d_b r_b
+bnd conc dom_al c_l
+bnd flux dom_br n_r
+itr cont dom_ar dom_bl
+
+# solver
+solve 1000 1e-6 1.0
