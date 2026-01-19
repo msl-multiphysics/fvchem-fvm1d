@@ -1,0 +1,44 @@
+# set simulation
+simu steady
+
+# initialize mesh
+mesh bounds 0.0 1.0 20
+
+# create domains
+dom1d dom = 0
+dom0d dom_l = dom 0
+dom0d dom_r = dom 1
+
+# create variables
+var1d c1 = dom 1.0 "examples/output_steady_bndflux/c1"
+var1d c2 = dom 1.0 "examples/output_steady_bndflux/c2"
+
+# create function
+func r1_func c1 c2 = 2.0 * c1 + 0.5 * c2
+func r2_func c1 c2 = 0.5 * c1 + 1.0 * c2
+
+# create scalars
+scl1d d11 = dom 1.0
+scl1d d12 = dom 0.5
+scl1d d21 = dom 0.0
+scl1d d22 = dom 2.0
+scl1d r1 = dom r1_func
+scl1d r2 = dom r2_func
+scl0d c1_l = dom_l 1.0
+scl0d c2_l = dom_l 0.5
+scl0d c1_r = dom_r 2.0
+scl0d c2_r = dom_r 1.0
+
+# set physics
+physics diff_multi 2
+
+# set interior and boundary conditions
+int dom 0 c1 0 d11 1 d12 r1
+int dom 1 c2 0 d21 1 d22 r2
+bnd conc dom_l 0 c1_l
+bnd conc dom_l 1 c2_l
+bnd conc dom_r 0 c1_r
+bnd conc dom_r 1 c2_r
+
+# solver
+solve 1000 1e-6 1.0
