@@ -1,7 +1,8 @@
 use fvchem_fvm1d::*;
 use std::fs::create_dir_all;
+use std::sync::Arc;
 
-fn mtrn_func(_t: usize, _x: f64, vars: Vec<f64>) -> f64 {
+fn mtrn_func(_t: usize, _x: f64, vars: &[f64]) -> f64 {
     let c = vars[0];
     let n = 0.2 * (c - 1.0); // mass transfer function
     n
@@ -22,7 +23,7 @@ fn main() {
     let c = prob.add_var1d(dom, 1.0).unwrap();
     let d = prob.add_scl1d(dom, 0.1).unwrap();
     let r = prob.add_scl1d(dom, 2.0).unwrap();
-    let n_l = prob.add_scl0d_from_function(dom_l, mtrn_func, vec![c]).unwrap();
+    let n_l = prob.add_scl0d_from_function(dom_l, Arc::new(mtrn_func), vec![c]).unwrap();
     let c_r = prob.add_scl0d(dom_r, 1.0).unwrap();
     prob.set_var1d_write_steady(c, "examples/output_scl0d_function/c".to_string());
 

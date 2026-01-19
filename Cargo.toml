@@ -7,6 +7,7 @@ edition = "2024"
 faer = "0.23"
 thiserror = "1"
 shell-words = "1"
+fasteval = "0.2"
 
 [profile.dev.package.faer]
 opt-level = 3

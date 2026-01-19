@@ -1,9 +1,11 @@
+use fasteval::{Parser, Slab, Evaler};
 use fvchem_fvm1d::*;
 use shell_words;
 use std::collections::HashMap;
 use std::env;
 use std::fs::{create_dir_all, File};
 use std::io::{BufRead, BufReader};
+use std::sync::Arc;
 
 fn main() -> Result<(), FVChemError> {
     
@@ -35,6 +37,10 @@ fn main() -> Result<(), FVChemError> {
     let mut scl0d_map: HashMap<String, usize> = HashMap::new();
     let mut scl1d_map: HashMap<String, usize> = HashMap::new();
     let mut var1d_map: HashMap<String, usize> = HashMap::new();
+
+    // initialize functions
+    let mut func_map: HashMap<String, Arc<dyn Fn(usize, f64, &[f64]) -> f64 + Send + Sync>> = HashMap::new();
+    let mut func_var: HashMap<String, Vec<usize>> = HashMap::new();
 
     // iterate through lines
     for (i, line) in lines.enumerate() {
@@ -252,9 +258,52 @@ fn main() -> Result<(), FVChemError> {
                 }
 
             },
-            "scl1d" => {
+            "func" => {
+
+                // get function name
+                let name = parts.get(1).expect(format!("Line {}: func requires 'func <name> <var1_name> [...] = <expression>'. Could not find name.", i+1).as_str());
+
+                // get variable names
+                let eq_index = parts.iter().position(|x| x == "=").expect(format!("Line {}: func requires 'func <name> <var1_name> [...] = <expression>'. Could not find '='.", i+1).as_str());
+                let var_name_vec = &parts[2..eq_index];
                 
-                // TODO: implement non-constant scalar1d
+                // get variable ids and create variable index map
+                let mut var_id_vec: Vec<usize> = Vec::new();
+                let mut var_name_map: HashMap<String, usize> = HashMap::new();
+                for (j, vn) in var_name_vec.iter().enumerate() { 
+                    let var_id = match var1d_map.get(vn) {
+                        Some(id) => *id,
+                        None => panic!("Line {}: var1d name '{}' does not exist.", i+1, vn),
+                    };
+                    var_id_vec.push(var_id);
+                    var_name_map.insert(vn.to_string(), j);
+                }
+                func_var.insert(name.to_string(), var_id_vec);
+
+                // parse expression
+                let expr_str = &parts[eq_index+1..].join(" ");
+                let mut slab = Slab::new();
+                let expr = Parser::new().parse(expr_str, &mut slab.ps).expect(format!("Line {}: Failed to parse expression.", i+1).as_str());
+
+                // create function
+                let func = Arc::new(move |t: usize, x: f64, vars: &[f64]| -> f64 {
+                    let mut cb = |name: &str, _args: Vec<f64>| -> Option<f64> {
+                        if name == "t" {
+                            Some(t as f64)
+                        } else if name == "x" {
+                            Some(x)
+                        } else if let Some(&i) = var_name_map.get(name) {
+                            vars.get(i).copied()
+                        } else {
+                            panic!("Line {}: Unknown variable name '{}' in expression.", i+1, name);
+                        }
+                    };
+                    expr.from(&slab.ps).eval(&slab, &mut cb).expect(format!("Line {}: Failed to evaluate expression.", i+1).as_str())
+                });
+                func_map.insert(name.to_string(), func);
+                
+            },
+            "scl1d" => {
 
                 // check that mesh and simulation type are defined
                 if !is_mesh_defined{
@@ -300,15 +349,27 @@ fn main() -> Result<(), FVChemError> {
 
                     },
                     false => {
-                        panic!("Line {}: Non-constant scl1d not yet implemented.", i+1);
+                        
+                        // parse value
+                        let func = match func_map.get(value_str) {
+                            Some(f) => f,
+                            None => panic!("Line {}: Function '{}' does not exist.", i+1, value_str),
+                        };
+                        let var_vec = match func_var.get(value_str) {
+                            Some(v) => v.clone(),
+                            None => panic!("Line {}: Function '{}' has no associated variables.", i+1, value_str),
+                        };
+
+                        // create scalar
+                        let scl_id = prob.add_scl1d_from_function(dom1d_id, func.clone(), var_vec)?;
+                        scl1d_map.insert(name.to_string(), scl_id);
+
                     }
                 }
 
             },
             "scl0d" => {
                 
-                // TODO: implement non-constant scalar0d
-
                 // check that mesh and simulation type are defined
                 if !is_mesh_defined{
                     panic!("Line {}: mesh must be defined before scalar", i+1)
@@ -351,7 +412,21 @@ fn main() -> Result<(), FVChemError> {
                         scl0d_map.insert(name.to_string(), scl_id);
                     }
                     false => {
-                        panic!("Line {}: Non-constant scl0d not yet implemented.", i+1);
+
+                        // parse value
+                        let func = match func_map.get(value_str) {
+                            Some(f) => f,
+                            None => panic!("Line {}: Function '{}' does not exist.", i+1, value_str),
+                        };
+                        let var_vec = match func_var.get(value_str) {
+                            Some(v) => v.clone(),
+                            None => panic!("Line {}: Function '{}' has no associated variables.", i+1, value_str),
+                        };
+
+                        // create scalar
+                        let scl_id = prob.add_scl0d_from_function(dom0d_id, func.clone(), var_vec)?;
+                        scl0d_map.insert(name.to_string(), scl_id);
+
                     }
                 }
 

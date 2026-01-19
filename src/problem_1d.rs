@@ -5,6 +5,7 @@ use crate::mesh_1d::Mesh1D;
 use crate::scalar_0d::Scalar0D;
 use crate::scalar_1d::Scalar1D;
 use crate::variable_1d::Variable1D;
+use std::sync::Arc;
 
 #[derive(Default)]
 pub struct Problem1D {
@@ -71,7 +72,7 @@ impl Problem1D {
     pub fn add_scl0d_from_function(
         &mut self,
         dom0d_id: usize,
-        value_func: fn(usize, f64, Vec<f64>) -> f64,
+        value_func: Arc<dyn Fn(usize, f64, &[f64]) -> f64 + Send + Sync>,
         value_var: Vec<usize>,
     ) -> Result<usize, FVChemError> {
         // get scl0d_id
@@ -129,7 +130,7 @@ impl Problem1D {
     pub fn add_scl1d_from_function(
         &mut self,
         dom1d_id: usize,
-        value_func: fn(usize, f64, Vec<f64>) -> f64,
+        value_func: Arc<dyn Fn(usize, f64, &[f64]) -> f64 + Send + Sync>,
         value_var: Vec<usize>,
     ) -> Result<usize, FVChemError> {
         // get scl1d_id

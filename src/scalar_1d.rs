@@ -3,6 +3,7 @@ use crate::utils_csv::{read_csv, write_csv};
 use crate::utils_error::FVChemError;
 use crate::variable_1d::Variable1D;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 pub struct Scalar1D {
     // struct ids
@@ -24,7 +25,7 @@ pub struct Scalar1D {
 
     // non-constant input type
     pub is_constant: bool,
-    pub value_func: fn(usize, f64, Vec<f64>) -> f64,
+    pub value_func: Arc<dyn Fn(usize, f64, &[f64]) -> f64 + Send + Sync>,
     pub value_var: Vec<usize>,
 }
 
@@ -41,7 +42,7 @@ impl Default for Scalar1D {
             write_step: 0,
             write_file: String::new(),
             is_constant: true,
-            value_func: |_, _, _| 0.0,
+            value_func: Arc::new(|_, _, _| 0.0),
             value_var: Vec::new(),
         }
     }
@@ -77,7 +78,7 @@ impl Scalar1D {
 
         // set input to constant
         let is_constant = true;
-        let value_func = |_: usize, _: f64, _: Vec<f64>| 0.0;
+        let value_func = Arc::new(|_: usize, _: f64, _: &[f64]| 0.0);
         let value_var: Vec<usize> = Vec::new();
 
         // return
@@ -101,7 +102,7 @@ impl Scalar1D {
         scl1d_id: usize,
         dom1d: &Domain1D,
         var1d_all: &Vec<Variable1D>,
-        value_func: fn(usize, f64, Vec<f64>) -> f64,
+        value_func: Arc<dyn Fn(usize, f64, &[f64]) -> f64 + Send + Sync>,
         value_var: Vec<usize>,
     ) -> Result<Scalar1D, FVChemError> {
         // get struct ids
@@ -119,7 +120,7 @@ impl Scalar1D {
             }
 
             // update scalar value
-            let scl_val = (value_func)(0, x, var_val.clone());
+            let scl_val = (value_func)(0, x, var_val.as_slice());
             cell_value.insert(cid, scl_val);
         }
         let cell_value_prev: HashMap<i32, f64> = cell_value.clone();
@@ -136,7 +137,7 @@ impl Scalar1D {
             }
 
             // update scalar value
-            let scl_val = (value_func)(0, x, var_val.clone());
+            let scl_val = (value_func)(0, x, var_val.as_slice());
             face_value.insert(fid, scl_val);
         }
         let face_value_prev: HashMap<i32, f64> = face_value.clone();
@@ -215,7 +216,7 @@ impl Scalar1D {
 
         // set input to constant
         let is_constant = true;
-        let value_func = |_: usize, _: f64, _: Vec<f64>| 0.0;
+        let value_func = Arc::new(|_: usize, _: f64, _: &[f64]| 0.0);
         let value_var: Vec<usize> = Vec::new();
 
         // return
@@ -264,7 +265,7 @@ impl Scalar1D {
             }
 
             // update scalar value
-            let scl_val = (&scl.value_func)(0, x, var_val.clone());
+            let scl_val = (&scl.value_func)(0, x, var_val.as_slice());
             scl.cell_value.insert(cid, scl_val);
         }
 
@@ -279,7 +280,7 @@ impl Scalar1D {
             }
 
             // update scalar value
-            let scl_val = (&scl.value_func)(ts, x, var_val.clone());
+            let scl_val = (&scl.value_func)(ts, x, var_val.as_slice());
             scl.face_value.insert(fid, scl_val);
         }
 

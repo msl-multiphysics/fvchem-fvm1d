@@ -1,7 +1,8 @@
 use fvchem_fvm1d::*;
 use std::fs::create_dir_all;
+use std::sync::Arc;
 
-fn r_func(_t: usize, _x: f64, vars: Vec<f64>) -> f64 {
+fn r_func(_t: usize, _x: f64, vars: &[f64]) -> f64 {
     let c = vars[0];
     let r = -1.0 * (c - 2.0); // source term function
     r
@@ -21,7 +22,7 @@ fn main() {
     // add properties
     let c = prob.add_var1d(dom, 1.0).unwrap();
     let d = prob.add_scl1d(dom, 0.1).unwrap();
-    let r = prob.add_scl1d_from_function(dom, r_func, vec![c]).unwrap();
+    let r = prob.add_scl1d_from_function(dom, Arc::new(r_func), vec![c]).unwrap();
     let c_l = prob.add_scl0d(dom_l, 1.0).unwrap();
     let n_r = prob.add_scl0d(dom_r, 0.5).unwrap();
     prob.set_var1d_write_steady(c, "examples/output_scl1d_function/c".to_string());
