@@ -228,7 +228,7 @@ fn parse_diff(
                 }
                 "mass_trn" => {
                     let k_name = parts.get(4).expect(format!("Line {}: mass_trn requires 'itr mass_trn <dom_a> <dom_b> <masss_trn>'. Could not find mass_trn.", line_num).as_str());
-                    let k_id = *scl1d_map.get(k_name).expect(format!("Line {}: scl1d name '{}' not found.", line_num, k_name).as_str());
+                    let k_id = *scl0d_map.get(k_name).expect(format!("Line {}: scl1d name '{}' not found.", line_num, k_name).as_str());
                     phys.add_interface_masstransfer(dom_a_id, dom_b_id, k_id);
                 }
                 _ => {
@@ -331,7 +331,7 @@ fn parse_diffadv(
                 }
                 "mass_trn" => {
                     let k_name = parts.get(4).expect(format!("Line {}: mass_trn requires 'itr mass_trn <dom_a> <dom_b> <masss_trn>'. Could not find mass_trn.", line_num).as_str());
-                    let k_id = *scl1d_map.get(k_name).expect(format!("Line {}: scl1d name '{}' not found.", line_num, k_name).as_str());
+                    let k_id = *scl0d_map.get(k_name).expect(format!("Line {}: scl1d name '{}' not found.", line_num, k_name).as_str());
                     phys.add_interface_masstransfer(dom_a_id, dom_b_id, k_id);
                 }
                 _ => {
@@ -439,7 +439,7 @@ fn parse_diff_multi(
                 }
                 "mass_trn" => {
                     let k_name = parts.get(5).expect(format!("Line {}: mass_trn requires 'itr mass_trn <dom_a> <dom_b> <masss_trn>'. Could not find mass_trn.", line_num).as_str());
-                    let k_id = *scl1d_map.get(k_name).expect(format!("Line {}: scl1d name '{}' not found.", line_num, k_name).as_str());
+                    let k_id = *scl0d_map.get(k_name).expect(format!("Line {}: scl1d name '{}' not found.", line_num, k_name).as_str());
                     phys.add_interface_masstransfer(dom_a_id, dom_b_id, comp_i, k_id);
                 }
                 _ => {
@@ -555,7 +555,7 @@ fn parse_diffadv_multi(
                 }
                 "mass_trn" => {
                     let k_name = parts.get(5).expect(format!("Line {}: mass_trn requires 'itr mass_trn <dom_a> <dom_b> <masss_trn>'. Could not find mass_trn.", line_num).as_str());
-                    let k_id = *scl1d_map.get(k_name).expect(format!("Line {}: scl1d name '{}' not found.", line_num, k_name).as_str());
+                    let k_id = *scl0d_map.get(k_name).expect(format!("Line {}: scl1d name '{}' not found.", line_num, k_name).as_str());
                     phys.add_interface_masstransfer(dom_a_id, dom_b_id, comp_i, k_id);
                 }
                 _ => {

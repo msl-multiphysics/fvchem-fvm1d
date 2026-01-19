@@ -1,0 +1,33 @@
+# set simulation
+simu steady
+
+# initialize mesh
+mesh bounds 0.0 1.0 20
+
+# create domains
+dom1d dom = 0
+dom0d dom_l = dom 0
+dom0d dom_r = dom 1
+
+# create variables
+var1d c = dom 1.0 "examples/output_scl0d_function/c"
+
+# create functions
+func n_func c = 0.2 * (c - 1.0)
+
+# create scalars
+scl1d d = dom 0.1
+scl1d r = dom 2.0
+scl0d n_l = dom_l n_func
+scl0d c_r = dom_r 1.0
+
+# set physics
+physics diff
+
+# set interior and boundary conditions
+int dom c d r
+bnd flux dom_l n_l
+bnd conc dom_r c_r
+
+# solver
+solve 1000 1e-6 0.5

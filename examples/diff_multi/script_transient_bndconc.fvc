@@ -1,5 +1,5 @@
 # set simulation
-simu steady
+simu transient
 
 # initialize mesh
 mesh bounds 0.0 1.0 20
@@ -10,8 +10,8 @@ dom0d dom_l = dom 0
 dom0d dom_r = dom 1
 
 # create variables
-var1d c1 = dom 1.0 "examples/output_steady_bndconc/c1"
-var1d c2 = dom 1.0 "examples/output_steady_bndconc/c2"
+var1d c1 = dom 1.0 "examples/output_transient_bndconc/c1" 20
+var1d c2 = dom 2.0 "examples/output_transient_bndconc/c2" 20
 
 # create function
 func r1_func c1 c2 = 2.0 * c1 + 0.5 * c2
@@ -41,4 +41,4 @@ bnd conc dom_r 0 c1_r
 bnd conc dom_r 1 c2_r
 
 # solver
-solve 1000 1e-6 1.0
+solve 0.001 101 1000 1e-6 0.5
