@@ -1,7 +1,6 @@
 use crate::utils_csv::{read_csv, write_csv};
 use crate::utils_error::FVChemError;
 use std::collections::{HashMap, HashSet};
-use std::vec;
 
 #[derive(Default)]
 pub struct Mesh1D {

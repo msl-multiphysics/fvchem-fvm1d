@@ -265,7 +265,7 @@ impl Scalar1D {
             }
 
             // update scalar value
-            let scl_val = (&scl.value_func)(0, x, var_val.as_slice());
+            let scl_val = (&scl.value_func)(ts, x, var_val.as_slice());
             scl.cell_value.insert(cid, scl_val);
         }
 
